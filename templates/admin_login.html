@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Admin Login — Barangay Care{% endblock %}
+{% block title %}Staff Login — Barangay Care{% endblock %}
 
 {% block content %}
 <section class="form-section">
@@ -7,7 +7,7 @@
         <div class="card form-card login-card">
             <div class="login-header">
                 <i class="fa-solid fa-lock login-icon"></i>
-                <h1>Admin Login</h1>
+                <h1>Staff Login</h1>
                 <p>Authorized staff only</p>
             </div>
             <form method="POST" action="{{ url_for('admin_login') }}" id="loginForm">

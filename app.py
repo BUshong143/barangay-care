@@ -1827,6 +1827,9 @@ def serve_upload(filename):
 
 @app.route("/resident/register", methods=["GET", "POST"])
 def resident_register():
+    flash("Resident accounts are not used. Track with your number or enable browser alerts.", "success")
+    return redirect(url_for("track"))
+
     if session.get("resident_logged_in"):
         return redirect(url_for("resident_dashboard"))
     if session.get("admin_logged_in"):
@@ -1903,6 +1906,9 @@ def resident_register():
 
 @app.route("/resident/login", methods=["GET", "POST"])
 def resident_login():
+    flash("Resident accounts are not used. Track with your number or enable browser alerts.", "success")
+    return redirect(url_for("admin_login"))
+
     if session.get("resident_logged_in"):
         return redirect(url_for("resident_dashboard"))
     if session.get("admin_logged_in"):
@@ -1966,6 +1972,9 @@ def resident_login():
 
 @app.route("/resident/logout")
 def resident_logout():
+    flash("Resident accounts are not used. Track with your number or enable browser alerts.", "success")
+    return redirect(url_for("index"))
+
     try:
         log_activity("resident.logout")
     except Exception:
@@ -1978,6 +1987,9 @@ def resident_logout():
 @app.route("/resident/dashboard")
 @resident_login_required
 def resident_dashboard():
+    flash("Resident accounts are not used. Track with your number or enable browser alerts.", "success")
+    return redirect(url_for("track"))
+
     complaints = []
     stats = {"total": 0, "open": 0, "resolved": 0, "confirmed": 0}
     status_filter = sanitize_text(request.args.get("status", ""), 30)
@@ -2066,6 +2078,9 @@ def resident_dashboard():
 @app.route("/resident/notifications")
 @resident_login_required
 def resident_notifications():
+    flash("Resident accounts are not used. Track with your number or enable browser alerts.", "success")
+    return redirect(url_for("track"))
+
     items = []
     try:
         rid = session.get("resident_id")

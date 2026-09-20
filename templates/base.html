@@ -30,7 +30,7 @@
           crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=45">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=46">
     {% block extra_css %}{% endblock %}
 </head>
 <body class="has-bottom-nav {% if admin_logged_in %}admin-shell{% else %}public-shell{% endif %} {% block body_class %}{% endblock %}">
@@ -157,27 +157,21 @@
         <a href="{{ url_for('index') }}" class="bn-item {% if request.endpoint == 'index' %}active{% endif %}">
             <i class="fa-solid fa-house"></i><span>Home</span>
         </a>
+        <a href="{{ url_for('submit_complaint') }}" class="bn-item {% if request.endpoint == 'submit_complaint' %}active{% endif %}">
+            <i class="fa-solid fa-plus"></i><span>Report</span>
+        </a>
         <a href="{{ url_for('track') }}" class="bn-item {% if request.endpoint == 'track' %}active{% endif %}">
             <i class="fa-solid fa-magnifying-glass"></i><span>Track</span>
         </a>
-        {% if resident_logged_in %}
-        <a href="{{ url_for('resident_dashboard') }}" class="bn-item {% if request.endpoint == 'resident_dashboard' %}active{% endif %}">
-            <i class="fa-solid fa-folder-open"></i><span>My Cases</span>
+        <a href="{{ url_for('admin_login') }}" class="bn-item {% if request.endpoint == 'admin_login' %}active{% endif %}">
+            <i class="fa-solid fa-user-shield"></i><span>Staff</span>
         </a>
-        <a href="{{ url_for('resident_notifications') }}" class="bn-item {% if request.endpoint and 'notification' in request.endpoint %}active{% endif %}">
-            <i class="fa-solid fa-bell"></i><span>Alerts{% if unread_notifications %} ({{ unread_notifications }}){% endif %}</span>
-        </a>
-        {% else %}
-        <a href="{{ url_for('resident_login') }}" class="bn-item {% if request.endpoint in ['resident_login', 'resident_register'] %}active{% endif %}">
-            <i class="fa-solid fa-user"></i><span>Account</span>
-        </a>
-        {% endif %}
         {% endif %}
     </nav>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script src="{{ url_for('static', filename='js/main.js') }}?v=45"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}?v=46"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>
