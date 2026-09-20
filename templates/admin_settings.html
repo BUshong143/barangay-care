@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Settings — Admin{% endblock %}
+
+{% block content %}
+<section class="admin-section">
+    <div class="container">
+        <div class="settings-layout">
+
+            <!-- Left column: profile + password -->
+            <div class="settings-col settings-col-main">
+                <div class="card settings-card">
+                    <h3><i class="fa-solid fa-id-badge"></i> Display Name</h3>
+                    {% if account %}
+                    <p class="field-hint settings-card-intro">This is the name residents and other staff see on your cases.</p>
+                    <form method="POST" class="action-form" data-loader="Saving...">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="action" value="update_profile">
+                        <div class="form-group">
+                            <label for="full_name">Display name</label>
+                            <input type="text" id="full_name" name="full_name" required maxlength="150"
+                                   value="{{ account.full_name }}" placeholder="e.g., Juan Dela Cruz">
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-floppy-disk"></i> Save Name
+                        </button>
+                    </form>
+                    {% else %}
+                    <p class="field-hint">The built-in admin account can't be renamed here. Create a personal staff account from <a href="{{ url_for('admin_staff') }}">Staff Accounts</a> instead.</p>
+                    {% endif %}
+                </div>
+
+                <div class="card settings-card">
+                    <h3><i class="fa-solid fa-lock"></i> Change Password</h3>
+                    {% if account %}
+                    <p class="field-hint settings-card-intro">Use a password you don't use elsewhere.</p>
+                    <form method="POST" class="action-form" data-loader="Updating...">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="action" value="change_password">
+                        <div class="form-group">
+                            <label for="current_password">Current password</label>
+                            <input type="password" id="current_password" name="current_password"
+                                   required autocomplete="current-password">
+                        </div>
+                        <div class="form-group">
+                            <label for="new_password">New password</label>
+                            <input type="password" id="new_password" name="new_password"
+                                   required minlength="6" autocomplete="new-password">
+                            <small class="field-hint">At least 6 characters.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirm_password">Confirm new password</label>
+                            <input type="password" id="confirm_password" name="confirm_password"
+                                   required minlength="6" autocomplete="new-password">
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-key"></i> Update Password
+                        </button>
+                    </form>
+                    {% else %}
+                    <p class="field-hint">Password for the built-in admin account is set via environment variables, not here.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Right column: account info + staff + logout -->
+            <div class="settings-col settings-col-side">
+                <div class="card settings-card">
+                    <h3><i class="fa-solid fa-circle-info"></i> Account Details</h3>
+                    <div class="detail-row">
+                        <span class="detail-label">Username</span>
+                        <span class="detail-value">{{ account.username if account else (admin_user or '—') }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Role</span>
+                        <span class="detail-value">
+                            <span class="badge badge-status-verified">{{ account.role if account else 'admin' }}</span>
+                        </span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Status</span>
+                        <span class="detail-value">
+                            {% if account and not account.is_active %}
+                            <span class="badge badge-urgent">Inactive</span>
+                            {% else %}
+                            <span class="badge badge-status-resolved">Active</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Member since</span>
+                        <span class="detail-value">
+                            {{ format_ph(account.created_at, '%b %d, %Y') if account and account.created_at else '—' }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="card settings-card settings-theme-card desktop-only-block">
+                    <h3><i class="fa-solid fa-circle-half-stroke"></i> Appearance</h3>
+                    <p class="field-hint settings-card-intro">Switch between light and dark mode.</p>
+                    <button type="button" id="settingsThemeToggle" class="btn btn-outline btn-block">
+                        <i class="fa-solid fa-moon" id="settingsThemeIcon"></i>
+                        <span id="settingsThemeLabel">Dark mode</span>
+                    </button>
+                </div>
+
+                <div class="card settings-card settings-logout-card">
+                    <h3><i class="fa-solid fa-right-from-bracket"></i> Log Out</h3>
+                    <p class="field-hint settings-card-intro">End your current staff session on this device.</p>
+                    <a href="{{ url_for('admin_logout') }}" class="btn btn-outline btn-danger btn-block">
+                        <i class="fa-solid fa-right-from-bracket"></i> Logout
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+{% endblock %}

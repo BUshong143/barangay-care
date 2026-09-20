@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Cases — Admin{% endblock %}
+
+{% block content %}
+<section class="admin-section">
+    <div class="container">
+        <div class="card" style="margin-bottom:1.25rem;">
+            <h3 style="margin-bottom:0.75rem;"><i class="fa-solid fa-filter"></i> Advanced filters</h3>
+            <form method="GET" action="{{ url_for('admin_dashboard') }}" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.65rem;">
+                <div class="form-group">
+                    <label>Status</label>
+                    <select name="status">
+                        <option value="">All</option>
+                        {% for s in statuses %}
+                        <option value="{{ s }}" {% if current_status == s %}selected{% endif %}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Priority</label>
+                    <select name="priority">
+                        <option value="">All</option>
+                        {% for p in priorities %}
+                        <option value="{{ p }}" {% if current_priority == p %}selected{% endif %}>{{ p }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select name="category">
+                        <option value="">All</option>
+                        {% for c in (categories or get_active_categories()) %}
+                        <option value="{{ c }}" {% if current_category == c %}selected{% endif %}>{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Assigned</label>
+                    <input type="text" name="assigned" value="{{ current_assigned or '' }}" placeholder="Name" maxlength="150">
+                </div>
+                <div class="form-group">
+                    <label>From</label>
+                    <input type="date" name="from" value="{{ date_from or '' }}">
+                </div>
+                <div class="form-group">
+                    <label>To</label>
+                    <input type="date" name="to" value="{{ date_to or '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Search</label>
+                    <input type="search" name="q" value="{{ search or '' }}" placeholder="Tracking, location…" maxlength="100">
+                </div>
+                <div class="form-group" style="display:flex;align-items:flex-end;gap:0.4rem;flex-wrap:wrap;">
+                    <label style="display:flex;align-items:center;gap:0.35rem;font-size:0.85rem;">
+                        <input type="checkbox" name="overdue" value="1" {% if overdue_only %}checked{% endif %}> Overdue only
+                    </label>
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-search"></i> Apply</button>
+                    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline btn-sm">Reset</a>
+                </div>
+            </form>
+            <div style="margin-top:0.75rem;display:flex;flex-wrap:wrap;gap:0.4rem;">
+                <a class="btn btn-sm btn-outline" href="{{ url_for('admin_export_csv') }}?status={{ current_status or '' }}&amp;priority={{ current_priority or '' }}&amp;category={{ current_category or '' }}&amp;from={{ date_from or '' }}&amp;to={{ date_to or '' }}">
+                    <i class="fa-solid fa-file-csv"></i> CSV
+                </a>
+                <a class="btn btn-sm btn-outline" href="{{ url_for('admin_export_xlsx') }}?status={{ current_status or '' }}&amp;priority={{ current_priority or '' }}&amp;category={{ current_category or '' }}&amp;from={{ date_from or '' }}&amp;to={{ date_to or '' }}">
+                    <i class="fa-solid fa-file-excel"></i> Excel
+                </a>
+                <a class="btn btn-sm btn-outline" href="{{ url_for('admin_map') }}"><i class="fa-solid fa-map"></i> Map</a>
+                <a class="btn btn-sm btn-outline" href="{{ url_for('admin_reports') }}"><i class="fa-solid fa-chart-line"></i> Reports</a>
+            </div>
+        </div>
+        <p class="field-hint" style="margin-bottom:0.75rem;">{{ complaints|length }} case{{ 's' if complaints|length != 1 else '' }} shown</p>
+        {% if complaints %}
+        <div class="complaints-grid">
+            {% for c in complaints %}
+            <div class="complaint-card {% if c.photo_path %}has-thumb{% endif %}">
+                {% if c.photo_path %}
+                <a href="{{ url_for('admin_complaint', complaint_id=c.id) }}" class="complaint-thumb-link">
+                    <img class="complaint-thumb" src="{{ url_for('serve_upload', filename=c.photo_path.replace('uploads/', '')) }}"
+                         alt="Photo attached to {{ c.tracking_number }}" loading="lazy">
+                </a>
+                {% endif %}
+                <div class="complaint-card-main">
+                <div class="complaint-card-top">
+                    <div class="complaint-card-id">
+                        {{ c.tracking_number }}
+                    </div>
+                    <div class="complaint-card-badges">
+                        <span class="badge badge-{{ c.priority|lower }}">{{ c.priority }}</span>
+                        <span class="badge badge-status-{{ c.status|lower|replace(' ', '-') }}">{{ c.status }}</span>
+                        {% if c.due_at and c.status not in ['Resolved','Confirmed'] and is_overdue(c) %}
+                        <span class="badge badge-urgent">Overdue</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="complaint-card-body">
+                    <div class="complaint-card-row">
+                        <span class="complaint-card-label"><i class="fa-solid fa-tag"></i> Category</span>
+                        <span class="complaint-card-value">{{ c.category }}</span>
+                    </div>
+                    <div class="complaint-card-row">
+                        <span class="complaint-card-label"><i class="fa-solid fa-location-dot"></i> Location</span>
+                        <span class="complaint-card-value">{{ c.location }}</span>
+                    </div>
+                    <div class="complaint-card-row">
+                        <span class="complaint-card-label"><i class="fa-solid fa-user-gear"></i> Assigned</span>
+                        <span class="complaint-card-value">{{ c.assigned_personnel or '—' }}</span>
+                    </div>
+                </div>
+                <div class="complaint-card-footer">
+                    <div class="complaint-card-meta">
+                        <span title="Unread messages">
+                            <i class="fa-solid fa-comments"></i>
+                            {% set unread = unread_map.get(c.id, 0) %}
+                            {% if unread > 0 %}<span class="badge badge-urgent">{{ unread }}</span>{% else %}0{% endif %}
+                        </span>
+                        <span title="Submitted">
+                            <i class="fa-regular fa-calendar"></i>
+                            {{ c.created_at.strftime('%b %d, %Y') if c.created_at else '—' }}
+                        </span>
+                    </div>
+                    <a href="{{ url_for('admin_complaint', complaint_id=c.id) }}" class="btn btn-sm btn-primary">
+                        <i class="fa-solid fa-pen"></i> Manage
+                    </a>
+                </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="card complaints-empty">
+            <i class="fa-solid fa-inbox"></i>
+            No complaints match your filters.
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

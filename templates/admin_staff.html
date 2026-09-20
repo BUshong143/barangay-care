@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Staff Accounts — Admin{% endblock %}
+
+{% block content %}
+<section class="admin-section">
+    <div class="container admin-detail-layout">
+        <div class="card">
+            <h3><i class="fa-solid fa-user-plus"></i> Create responder / tanod account</h3>
+            <form method="POST" class="action-form" data-loader="Creating account...">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="create">
+                <div class="form-group">
+                    <label for="full_name">Full name <span class="required">*</span></label>
+                    <input type="text" id="full_name" name="full_name" required maxlength="150"
+                           placeholder="e.g., Juan Dela Cruz">
+                </div>
+                <div class="form-group">
+                    <label for="username">Username <span class="required">*</span></label>
+                    <input type="text" id="username" name="username" required maxlength="50"
+                           placeholder="e.g., juan.tanod" autocomplete="off"
+                           pattern="[a-zA-Z0-9._\-]{3,50}">
+                    <small class="field-hint">3–50 characters: letters, numbers, . _ -</small>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password <span class="required">*</span></label>
+                    <input type="password" id="password" name="password" required minlength="6"
+                           placeholder="At least 6 characters" autocomplete="new-password">
+                </div>
+                <div class="form-group">
+                    <label for="role">Role</label>
+                    <select id="role" name="role">
+                        <option value="responder">Responder</option>
+                        <option value="tanod">Tanod</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-plus"></i> Create account
+                </button>
+            </form>
+            <p class="field-hint" style="margin-top:1rem;">
+                Tip: When assigning a complaint, use the same <strong>full name</strong> so the responder only sees their cases.
+            </p>
+        </div>
+
+        <div class="card table-card staff-list-card">
+            <h3 class="staff-list-title"><i class="fa-solid fa-users"></i> All staff</h3>
+
+            {% if users %}
+            <div class="staff-cards">
+                {% for u in users %}
+                <div class="staff-card">
+                    <div class="staff-card-top">
+                        <div class="staff-card-info">
+                            <strong class="staff-card-name">{{ u.full_name }}</strong>
+                            <span class="staff-card-user">{% if u.staff_code %}{{ u.staff_code }} · {% endif %}@{{ u.username }}</span>
+                        </div>
+                        <div class="staff-card-badges">
+                            <span class="badge badge-status-verified">{{ u.role }}</span>
+                            {% if u.is_active %}
+                            <span class="badge badge-status-resolved">Active</span>
+                            {% else %}
+                            <span class="badge badge-urgent">Inactive</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="staff-card-actions">
+                        <form method="POST" class="inline-form action-form" data-loader="Updating...">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="action" value="toggle">
+                            <input type="hidden" name="user_id" value="{{ u.id }}">
+                            <button type="submit" class="btn btn-sm btn-outline">
+                                {% if u.is_active %}Disable{% else %}Enable{% endif %}
+                            </button>
+                        </form>
+                        <details class="reset-pw">
+                            <summary class="btn btn-sm btn-outline">Reset password</summary>
+                            <form method="POST" class="action-form reset-pw-form" data-loader="Saving...">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="action" value="reset_password">
+                                <input type="hidden" name="user_id" value="{{ u.id }}">
+                                <input type="password" name="new_password" required minlength="6"
+                                       placeholder="New password" class="reset-pw-input">
+                                <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                            </form>
+                        </details>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="dash-empty staff-empty">
+                <i class="fa-solid fa-inbox"></i>
+                No staff accounts yet. Create one above.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}

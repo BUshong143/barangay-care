@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+{% block title %}Track Complaint — Barangay Care{% endblock %}
+{% block body_class %}has-bottom-nav{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div class="container">
+        <h1><i class="fa-solid fa-magnifying-glass"></i> Track Your Complaint</h1>
+        <p>Enter your tracking number to view status, map, photo, and message staff.</p>
+    </div>
+</section>
+
+<section class="form-section">
+    <div class="container">
+        <div class="card form-card track-search-card">
+            <form method="GET" action="{{ url_for('track') }}" id="trackForm" class="track-form">
+                <div class="form-group">
+                    <label for="tracking">Tracking Number</label>
+                    <div class="input-with-btn">
+                        <input type="text" id="tracking" name="tracking"
+                               value="{{ tracking or '' }}"
+                               placeholder="#2026-00001" required maxlength="50"
+                               autocomplete="off">
+                        <button type="submit" class="btn btn-primary" id="trackBtn">
+                            <span class="btn-text"><i class="fa-solid fa-search"></i> Search</span>
+                            <span class="btn-loader hidden"><span class="mini-spinner white"></span></span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        {% if tracking and not complaint %}
+        <div class="card empty-card">
+            <p class="text-center">
+                <i class="fa-solid fa-circle-info"></i>
+                No complaint found for <strong>{{ tracking }}</strong>. Please check the number and try again.
+            </p>
+        </div>
+        {% endif %}
+
+        {% if complaint %}
+        <div class="card detail-card">
+            <div class="detail-header">
+                <div>
+                    <h2>{{ complaint.tracking_number }}</h2>
+                    <span class="badge badge-status-{{ complaint.status|lower|replace(' ', '-') }}">
+                        {{ complaint.status }}
+                    </span>
+                    <span class="badge badge-{{ complaint.priority|lower }}">{{ complaint.priority }}</span>
+                </div>
+                <div class="detail-meta">
+                    <i class="fa-regular fa-calendar"></i>
+                    {{ format_ph(complaint.created_at) }}
+                    <span class="tz-label">(PHT)</span>
+                </div>
+            </div>
+
+            <div class="detail-body">
+                <div class="detail-row">
+                    <span class="detail-label">Category</span>
+                    <span class="detail-value">{{ complaint.category }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Location</span>
+                    <span class="detail-value">{{ complaint.location }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Description</span>
+                    <span class="detail-value">{{ complaint.description }}</span>
+                </div>
+                {% if complaint.latitude and complaint.longitude %}
+                <div class="detail-row detail-row-full">
+                    <span class="detail-label">Map</span>
+                    <span class="detail-value">
+                        <div id="trackMap" class="map-el map-el-sm"
+                             data-lat="{{ complaint.latitude }}"
+                             data-lng="{{ complaint.longitude }}"></div>
+                        <p class="map-coords">{{ "%.6f"|format(complaint.latitude) }}, {{ "%.6f"|format(complaint.longitude) }}</p>
+                    </span>
+                </div>
+                {% endif %}
+                <div class="detail-row">
+                    <span class="detail-label">Assigned To</span>
+                    <span class="detail-value">{{ complaint.assigned_personnel or 'Not yet assigned' }}</span>
+                </div>
+                {% if complaint.resolution_remarks %}
+                <div class="detail-row">
+                    <span class="detail-label">Resolution</span>
+                    <span class="detail-value">{{ complaint.resolution_remarks }}</span>
+                </div>
+                {% endif %}
+                <div class="detail-row detail-row-full">
+                    <span class="detail-label"><i class="fa-solid fa-images"></i> Evidence</span>
+                    <span class="detail-value">
+                        <div class="evidence-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.75rem;">
+                            {% if complaint.photo_path %}
+                            <figure style="margin:0;">
+                                <figcaption style="font-size:0.75rem;color:var(--slate-500);margin-bottom:0.35rem;">Before</figcaption>
+                                <a href="{{ url_for('serve_upload', filename=complaint.photo_path.replace('uploads/', '')) }}" target="_blank" rel="noopener" class="photo-link">
+                                    <img src="{{ url_for('serve_upload', filename=complaint.photo_path.replace('uploads/', '')) }}" alt="Before" class="complaint-photo">
+                                </a>
+                            </figure>
+                            {% endif %}
+                            {% if complaint.resolution_photo_path %}
+                            <figure style="margin:0;">
+                                <figcaption style="font-size:0.75rem;color:var(--slate-500);margin-bottom:0.35rem;">Resolution</figcaption>
+                                <a href="{{ url_for('serve_upload', filename=complaint.resolution_photo_path.replace('uploads/', '')) }}" target="_blank" rel="noopener" class="photo-link">
+                                    <img src="{{ url_for('serve_upload', filename=complaint.resolution_photo_path.replace('uploads/', '')) }}" alt="Resolution" class="complaint-photo">
+                                </a>
+                            </figure>
+                            {% endif %}
+                            {% if complaint.after_photo_path %}
+                            <figure style="margin:0;">
+                                <figcaption style="font-size:0.75rem;color:var(--slate-500);margin-bottom:0.35rem;">After</figcaption>
+                                <a href="{{ url_for('serve_upload', filename=complaint.after_photo_path.replace('uploads/', '')) }}" target="_blank" rel="noopener" class="photo-link">
+                                    <img src="{{ url_for('serve_upload', filename=complaint.after_photo_path.replace('uploads/', '')) }}" alt="After" class="complaint-photo">
+                                </a>
+                            </figure>
+                            {% endif %}
+                            {% if not complaint.photo_path and not complaint.resolution_photo_path and not complaint.after_photo_path %}
+                            <span class="field-hint">No photos attached.</span>
+                            {% endif %}
+                        </div>
+                    </span>
+                </div>
+            </div>
+
+            <div class="timeline">
+                <h3><i class="fa-solid fa-timeline"></i> Progress</h3>
+                <ul class="timeline-list">
+                    {% set steps = ['Submitted', 'Verified', 'Assigned', 'In Progress', 'Resolved', 'Confirmed'] %}
+                    {% set current = complaint.status %}
+                    {% for step in steps %}
+                    <li class="timeline-item
+                        {% if step == current %}active
+                        {% elif steps.index(step) < steps.index(current) %}done
+                        {% endif %}">
+                        <span class="timeline-dot"></span>
+                        <span class="timeline-label">{{ step }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            {% if history %}
+            <div class="timeline" style="margin-top:1.25rem;">
+                <h3><i class="fa-solid fa-clock-rotate-left"></i> Detailed timeline</h3>
+                <ul style="list-style:none;padding:0;margin:0.5rem 0 0;">
+                    {% for h in history %}
+                    <li style="padding:0.55rem 0;border-bottom:1px solid var(--slate-100);font-size:0.9rem;">
+                        <strong>
+                            {% if h.old_status and h.new_status %}
+                                {{ h.old_status }} → {{ h.new_status }}
+                            {% elif h.new_status %}
+                                {{ h.new_status }}
+                            {% else %}
+                                Update
+                            {% endif %}
+                        </strong>
+                        <span style="color:var(--slate-500);"> · {{ h.changed_by_name }}</span>
+                        {% if h.note %}<div style="color:var(--slate-600);margin-top:0.15rem;">{{ h.note }}</div>{% endif %}
+                        <div style="color:var(--slate-400);font-size:0.78rem;">{{ format_ph(h.created_at) }}</div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if complaint.status == 'Resolved' %}
+            <div class="confirm-box">
+                <p>Has this issue been fixed to your satisfaction?</p>
+                <form method="POST" action="{{ url_for('confirm_resolution', tracking_number=complaint.tracking_number) }}"
+                      id="confirmForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="form-group" style="text-align:left;margin:0.75rem 0;">
+                        <label>Rate the service (optional)</label>
+                        <div style="display:flex;gap:0.35rem;flex-wrap:wrap;">
+                            {% for r in [1,2,3,4,5] %}
+                            <label style="cursor:pointer;">
+                                <input type="radio" name="rating" value="{{ r }}" style="margin-right:0.2rem;">
+                                {{ r }}★
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="form-group" style="text-align:left;">
+                        <label for="feedback_comment">Feedback (optional)</label>
+                        <textarea id="feedback_comment" name="feedback_comment" rows="2" maxlength="1000"
+                                  placeholder="Any comments for the barangay team?"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success" id="confirmBtn">
+                        <span class="btn-text"><i class="fa-solid fa-thumbs-up"></i> Yes, Confirm Resolution</span>
+                        <span class="btn-loader hidden"><span class="mini-spinner white"></span> Confirming...</span>
+                    </button>
+                </form>
+            </div>
+            {% elif complaint.status == 'Confirmed' %}
+            <div class="confirm-box confirmed">
+                <p><i class="fa-solid fa-circle-check"></i> You confirmed this complaint as resolved. Thank you!</p>
+                {% if feedback %}
+                <p style="margin-top:0.5rem;">Your rating: <strong>{{ feedback.rating }}★</strong>
+                {% if feedback.comment %}<br><em>{{ feedback.comment }}</em>{% endif %}
+                </p>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        
+        <div class="card" id="pushCard" style="margin-bottom:1rem;" data-tracking="{{ complaint.tracking_number }}">
+            <h3><i class="fa-solid fa-bell"></i> Free status alerts</h3>
+            <p class="field-hint">
+                Get a browser notification when staff updates this case — no account needed.
+                Keep this tracking number: <strong>{{ complaint.tracking_number }}</strong>
+            </p>
+            <div style="display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;margin-top:0.5rem;">
+                <button type="button" class="btn btn-primary btn-sm" id="pushEnableBtn">
+                    <i class="fa-solid fa-bell"></i> Enable alerts
+                </button>
+                <button type="button" class="btn btn-outline btn-sm hidden" id="pushDisableBtn">
+                    Disable alerts
+                </button>
+                <span class="field-hint" id="pushStatus"></span>
+            </div>
+        </div>
+
+        <div class="card messages-card">
+            <h3><i class="fa-solid fa-comments"></i> Messages with Staff</h3>
+            <div class="messages-thread" id="messagesThread">
+                {% if messages %}
+                    {% for m in messages %}
+                    <div class="message-bubble {% if m.sender_type == 'resident' %}message-resident{% else %}message-admin{% endif %}">
+                        <div class="message-meta">
+                            <strong>{{ m.sender_name }}</strong>
+                            <span class="message-time">{{ format_ph(m.created_at) }}</span>
+                        </div>
+                        <div class="message-body">{{ m.body }}</div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="messages-empty">No messages yet. Send a message to staff below.</p>
+                {% endif %}
+            </div>
+            <form method="POST" action="{{ url_for('resident_send_message') }}" id="messageForm" class="message-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="tracking_number" value="{{ complaint.tracking_number }}">
+                <div class="form-group">
+                    <label for="sender_name">Your name</label>
+                    <input type="text" id="sender_name" name="sender_name"
+                           value="{{ complaint.resident_name or '' }}"
+                           placeholder="Optional" maxlength="150">
+                </div>
+                <div class="form-group">
+                    <label for="body">Message</label>
+                    <textarea id="body" name="body" rows="3" required maxlength="1000"
+                              placeholder="Type your message to staff..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" id="msgBtn">
+                    <span class="btn-text"><i class="fa-solid fa-paper-plane"></i> Send Message</span>
+                    <span class="btn-loader hidden"><span class="mini-spinner white"></span> Sending...</span>
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  var card = document.getElementById('pushCard');
+  if (!card) return;
+  var tracking = card.getAttribute('data-tracking');
+  var enableBtn = document.getElementById('pushEnableBtn');
+  var disableBtn = document.getElementById('pushDisableBtn');
+  var statusEl = document.getElementById('pushStatus');
+
+  function setStatus(msg) { if (statusEl) statusEl.textContent = msg || ''; }
+
+  function urlBase64ToUint8Array(base64String) {
+    var padding = '='.repeat((4 - base64String.length % 4) % 4);
+    var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    var rawData = window.atob(base64);
+    var outputArray = new Uint8Array(rawData.length);
+    for (var i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+    return outputArray;
+  }
+
+  async function ensureSW() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      throw new Error('Push not supported in this browser');
+    }
+    return navigator.serviceWorker.register('/sw.js');
+  }
+
+  async function enablePush() {
+    try {
+      setStatus('Checking…');
+      var st = await fetch('/api/push/status').then(function (r) { return r.json(); });
+      if (!st.enabled) {
+        setStatus('Alerts not configured on server yet.');
+        return;
+      }
+      var reg = await ensureSW();
+      var perm = await Notification.requestPermission();
+      if (perm !== 'granted') {
+        setStatus('Permission denied — enable notifications in browser settings.');
+        return;
+      }
+      var keyRes = await fetch('/api/push/vapid-public-key').then(function (r) { return r.json(); });
+      if (!keyRes.publicKey) {
+        setStatus('Server key missing.');
+        return;
+      }
+      var sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(keyRes.publicKey)
+      });
+      var res = await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tracking_number: tracking, subscription: sub.toJSON() })
+      });
+      if (!res.ok) {
+        var err = await res.json().catch(function () { return {}; });
+        throw new Error(err.error || 'Subscribe failed');
+      }
+      localStorage.setItem('push:' + tracking, '1');
+      enableBtn.classList.add('hidden');
+      disableBtn.classList.remove('hidden');
+      setStatus('Alerts on for ' + tracking);
+    } catch (e) {
+      setStatus(e.message || 'Could not enable alerts');
+    }
+  }
+
+  async function disablePush() {
+    try {
+      var reg = await navigator.serviceWorker.ready;
+      var sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        await fetch('/api/push/unsubscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tracking_number: tracking, endpoint: sub.endpoint })
+        });
+        await sub.unsubscribe();
+      }
+      localStorage.removeItem('push:' + tracking);
+      disableBtn.classList.add('hidden');
+      enableBtn.classList.remove('hidden');
+      setStatus('Alerts off');
+    } catch (e) {
+      setStatus(e.message || 'Could not disable');
+    }
+  }
+
+  if (localStorage.getItem('push:' + tracking) === '1') {
+    enableBtn.classList.add('hidden');
+    disableBtn.classList.remove('hidden');
+    setStatus('Alerts on for ' + tracking);
+  }
+  enableBtn.addEventListener('click', enablePush);
+  disableBtn.addEventListener('click', disablePush);
+})();
+</script>
+{% endblock %}

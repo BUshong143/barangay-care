@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Submit Complaint — Barangay Care{% endblock %}
+{% block body_class %}has-bottom-nav{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div class="container">
+        <h1><i class="fa-solid fa-pen-to-square"></i> Submit a Complaint</h1>
+        <p>Report an issue with a photo and your current location. You will receive a tracking number.</p>
+    </div>
+</section>
+
+<section class="form-section">
+    <div class="container">
+        <div class="card form-card">
+            <form id="complaintForm" method="POST" action="{{ url_for('submit_complaint') }}"
+                  enctype="multipart/form-data" class="complaint-form" novalidate>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="latitude" id="latitude" value="">
+                <input type="hidden" name="longitude" id="longitude" value="">
+
+                <div class="form-group">
+                    <label for="category">Category <span class="required">*</span></label>
+                    <select id="category" name="category" required>
+                        <option value="">Select category...</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat }}">{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="location">Location / Barangay Details <span class="required">*</span></label>
+                    <input type="text" id="location" name="location"
+                           placeholder="e.g., Brgy. San Jose, near plaza / Purok 3"
+                           required maxlength="255" autocomplete="street-address">
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Description <span class="required">*</span></label>
+                    <textarea id="description" name="description" rows="5"
+                              placeholder="Describe the issue clearly..." required maxlength="3000"></textarea>
+                </div>
+
+                <div class="form-divider" role="separator" aria-label="Optional details below">
+                    <span>Optional details — helps staff respond faster</span>
+                </div>
+
+                <!-- Location map -->
+                <div class="form-group">
+                    <label><i class="fa-solid fa-location-crosshairs"></i> Pin Your Current Location</label>
+                    <div class="location-panel">
+                        <button type="button" class="btn btn-outline btn-block" id="btnLocate">
+                            <i class="fa-solid fa-location-dot"></i>
+                            <span id="locateBtnText">Allow access to my location</span>
+                        </button>
+                        <p class="location-hint" id="locationHint">
+                            We use your location only to pin this report on the map. Works fully when the site is served over HTTPS. You can still submit without it.
+                        </p>
+                        <div id="mapContainer" class="map-container hidden" role="group" aria-label="Map showing your pinned location">
+                            <div id="map" class="map-el" role="img" aria-label="Map preview of the pinned complaint location"></div>
+                            <p class="map-coords" id="mapCoords"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="priority">Priority</label>
+                        <select id="priority" name="priority">
+                            {% for p in priorities %}
+                            <option value="{{ p }}" {% if p == 'Normal' %}selected{% endif %}>{{ p }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="resident_name">Your Name (optional)</label>
+                        <input type="text" id="resident_name" name="resident_name"
+                               maxlength="150" autocomplete="name" placeholder="For follow-up">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="resident_contact">Contact (optional)</label>
+                    <input type="text" id="resident_contact" name="resident_contact"
+                           maxlength="100" placeholder="Phone or email" autocomplete="tel">
+                </div>
+
+                <div class="form-group">
+                    <label for="photo">Photo of the Issue</label>
+                    <div class="file-upload-area" id="fileUploadArea">
+                        <input type="file" id="photo" name="photo" accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+                               capture="environment">
+                        <div class="file-upload-placeholder" id="filePlaceholder">
+                            <i class="fa-solid fa-camera"></i>
+                            <span>Tap to take photo or choose image</span>
+                            <small>PNG, JPG, GIF, WEBP · Max 5 MB</small>
+                        </div>
+                        <div class="file-preview hidden" id="filePreview">
+                            <img id="previewImg" alt="Preview">
+                            <button type="button" class="btn btn-sm btn-outline" id="removePhoto">
+                                <i class="fa-solid fa-xmark"></i> Remove
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                        <span class="btn-text"><i class="fa-solid fa-paper-plane"></i> Submit Complaint</span>
+                        <span class="btn-loader hidden">
+                            <span class="mini-spinner white"></span> Submitting...
+                        </span>
+                    </button>
+                    <a href="{{ url_for('index') }}" class="btn btn-outline">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}

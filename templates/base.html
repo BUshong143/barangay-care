@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Barangay Care — Community Complaint Tracking System">
+    <meta name="theme-color" content="#0d9488">
+    <script>
+    (function () {
+        try {
+            var stored = localStorage.getItem('theme');
+            var dark = stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (dark) document.documentElement.classList.add('dark-mode');
+        } catch (e) {}
+        try {
+            if (localStorage.getItem('sidebarPinned') === '1') {
+                document.documentElement.classList.add('sidebar-pinned');
+            }
+        } catch (e) {}
+    })();
+    </script>
+    <title>{% block title %}Barangay Care{% endblock %}</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+    <link rel="alternate icon" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+          integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+          crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=45">
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="has-bottom-nav {% if admin_logged_in %}admin-shell{% else %}public-shell{% endif %} {% block body_class %}{% endblock %}">
+    <div id="global-loader" class="loader-bar hidden" aria-hidden="true" role="status">
+        <div class="loader-bar-inner"></div>
+    </div>
+
+    <div class="app-layout">
+        {% if admin_logged_in %}
+        <!-- Staff desktop collapsible sidebar (Aether-style) — hidden for public/recipient role -->
+        <aside class="side-nav desktop-only" id="sideNav" aria-label="Staff navigation">
+            <div class="side-nav-brand">
+                <div class="side-nav-avatar" aria-hidden="true" title="Barangay Care">
+                    <i class="fa-solid fa-landmark"></i>
+                </div>
+                <div class="side-nav-brand-text">
+                    <strong>Barangay Care</strong>
+                    <span>{{ staff_name or admin_user or 'Staff' }}{% if staff_code %} · {{ staff_code }}{% endif %}</span>
+                </div>
+                <button type="button" class="side-nav-pin" id="sideNavPin" aria-label="Pin sidebar open" title="Pin / unpin sidebar">
+                    <i class="fa-solid fa-thumbtack"></i>
+                </button>
+            </div>
+
+            <nav class="side-nav-menu">
+                <a href="{{ url_for('admin_stats_dashboard') }}" class="side-link {% if request.endpoint == 'admin_stats_dashboard' %}active{% endif %}" title="Dashboard">
+                    <i class="fa-solid fa-gauge-high"></i><span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('admin_dashboard') }}" class="side-link {% if request.endpoint in ['admin_dashboard', 'admin_complaint'] %}active{% endif %}" title="Cases">
+                    <i class="fa-solid fa-clipboard-list"></i><span>Cases</span>
+                </a>
+                {% if (staff_role or 'admin') == 'admin' %}
+                <a href="{{ url_for('admin_staff') }}" class="side-link {% if request.endpoint == 'admin_staff' %}active{% endif %}" title="Staff">
+                    <i class="fa-solid fa-users"></i><span>Staff</span>
+                </a>
+                <a href="{{ url_for('admin_categories') }}" class="side-link {% if request.endpoint == 'admin_categories' %}active{% endif %}" title="Categories">
+                    <i class="fa-solid fa-tags"></i><span>Categories</span>
+                </a>
+                <a href="{{ url_for('admin_activity') }}" class="side-link {% if request.endpoint == 'admin_activity' %}active{% endif %}" title="Activity">
+                    <i class="fa-solid fa-clock-rotate-left"></i><span>Activity</span>
+                </a>
+                <a href="{{ url_for('admin_restore') }}" class="side-link {% if request.endpoint in ['admin_restore', 'admin_backup'] %}active{% endif %}" title="Backup">
+                    <i class="fa-solid fa-database"></i><span>Backup</span>
+                </a>
+                {% endif %}
+                <a href="{{ url_for('admin_map') }}" class="side-link {% if request.endpoint == 'admin_map' %}active{% endif %}" title="Map">
+                    <i class="fa-solid fa-map-location-dot"></i><span>Map</span>
+                </a>
+                <a href="{{ url_for('admin_reports') }}" class="side-link {% if request.endpoint == 'admin_reports' %}active{% endif %}" title="Reports">
+                    <i class="fa-solid fa-chart-line"></i><span>Reports</span>
+                </a>
+                <a href="{{ url_for('admin_settings') }}" class="side-link {% if request.endpoint == 'admin_settings' %}active{% endif %}" title="Settings">
+                    <i class="fa-solid fa-gear"></i><span>Settings</span>
+                </a>
+            </nav>
+
+            <div class="side-nav-footer">
+                <a href="{{ url_for('admin_logout') }}" class="side-link side-logout" title="Logout">
+                    <i class="fa-solid fa-right-from-bracket"></i><span>Logout</span>
+                </a>
+            </div>
+        </aside>
+        {% endif %}
+
+        <div class="app-main">
+            {% if admin_logged_in %}
+            <header class="admin-toolbar">
+                <form class="admin-search-form" method="GET" action="{{ url_for('admin_dashboard') }}" role="search">
+                    <i class="fa-solid fa-magnifying-glass admin-search-icon" aria-hidden="true"></i>
+                    <input type="search" name="q" class="admin-search-input"
+                           placeholder="Search cases..." maxlength="100"
+                           value="{{ request.args.get('q', '') }}"
+                           aria-label="Search cases">
+                </form>
+                <button type="button" id="mobileThemeToggle" class="theme-toggle admin-toolbar-theme" aria-label="Toggle dark mode" title="Toggle dark mode">
+                    <i class="fa-solid fa-moon" id="mobileThemeIcon" aria-hidden="true"></i>
+                </button>
+            </header>
+            {% endif %}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flash-container" role="status" aria-live="polite">
+                {% for category, message in messages %}
+                <div class="flash-message flash-{{ category }}" role="alert">
+                    <span class="flash-message-content">
+                        <span class="flash-icon">
+                            {% if category == 'success' %}<i class="fa-solid fa-check flash-icon-i"></i>
+                            {% else %}<i class="fa-solid fa-exclamation flash-icon-i"></i>{% endif %}
+                        </span>
+                        <span>{{ message }}</span>
+                    </span>
+                    <button type="button" class="flash-close" aria-label="Dismiss">&times;</button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            <main class="main-content">
+                {% block content %}{% endblock %}
+            </main>
+
+        </div>
+    </div>
+
+    <!-- Mobile bottom nav only -->
+    <nav class="bottom-nav" id="bottomNav" aria-label="Main navigation">
+        {% if admin_logged_in %}
+        <a href="{{ url_for('admin_stats_dashboard') }}" class="bn-item {% if request.endpoint == 'admin_stats_dashboard' %}active{% endif %}">
+            <i class="fa-solid fa-gauge-high"></i><span>Dashboard</span>
+        </a>
+        <a href="{{ url_for('admin_dashboard') }}" class="bn-item {% if request.endpoint in ['admin_dashboard', 'admin_complaint'] %}active{% endif %}">
+            <i class="fa-solid fa-clipboard-list"></i><span>Cases</span>
+        </a>
+        {% if (staff_role or 'admin') == 'admin' %}
+        <a href="{{ url_for('admin_staff') }}" class="bn-item {% if request.endpoint == 'admin_staff' %}active{% endif %}">
+            <i class="fa-solid fa-users"></i><span>Staff</span>
+        </a>
+        {% endif %}
+        <a href="{{ url_for('admin_settings') }}" class="bn-item {% if request.endpoint == 'admin_settings' %}active{% endif %}">
+            <i class="fa-solid fa-gear"></i><span>Settings</span>
+        </a>
+        {% else %}
+        <a href="{{ url_for('index') }}" class="bn-item {% if request.endpoint == 'index' %}active{% endif %}">
+            <i class="fa-solid fa-house"></i><span>Home</span>
+        </a>
+        <a href="{{ url_for('track') }}" class="bn-item {% if request.endpoint == 'track' %}active{% endif %}">
+            <i class="fa-solid fa-magnifying-glass"></i><span>Track</span>
+        </a>
+        {% if resident_logged_in %}
+        <a href="{{ url_for('resident_dashboard') }}" class="bn-item {% if request.endpoint == 'resident_dashboard' %}active{% endif %}">
+            <i class="fa-solid fa-folder-open"></i><span>My Cases</span>
+        </a>
+        <a href="{{ url_for('resident_notifications') }}" class="bn-item {% if request.endpoint and 'notification' in request.endpoint %}active{% endif %}">
+            <i class="fa-solid fa-bell"></i><span>Alerts{% if unread_notifications %} ({{ unread_notifications }}){% endif %}</span>
+        </a>
+        {% else %}
+        <a href="{{ url_for('resident_login') }}" class="bn-item {% if request.endpoint in ['resident_login', 'resident_register'] %}active{% endif %}">
+            <i class="fa-solid fa-user"></i><span>Account</span>
+        </a>
+        {% endif %}
+        {% endif %}
+    </nav>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}?v=45"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

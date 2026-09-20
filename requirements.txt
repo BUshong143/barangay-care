@@ -1,0 +1,14 @@
+Flask==3.0.3
+Flask-WTF==1.2.1
+psycopg2-binary==2.9.10
+python-dotenv==1.0.1
+Werkzeug==3.0.3
+gunicorn==22.0.0
+bleach==6.1.0
+Pillow==10.4.0
+tzdata==2024.1
+openpyxl==3.1.5
+reportlab==4.2.5
+pywebpush==2.0.1
+# Optional for Android FCM (install when deploying the app):
+# firebase-admin==6.5.0

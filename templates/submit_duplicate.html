@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Possible Duplicate — Barangay Care{% endblock %}
+{% block body_class %}has-bottom-nav{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div class="container">
+        <h1><i class="fa-solid fa-clone"></i> Similar complaint found</h1>
+        <p>We found open complaint(s) that look similar. You can track an existing one or submit anyway.</p>
+    </div>
+</section>
+
+<section class="form-section">
+    <div class="container">
+        <div class="card" style="margin-bottom:1.25rem;">
+            <h3>Possible matches</h3>
+            <ul style="list-style:none;padding:0;margin:0.75rem 0 0;">
+                {% for d in duplicates %}
+                <li style="padding:0.75rem 0;border-bottom:1px solid var(--slate-100);">
+                    <strong>{{ d.tracking_number }}</strong>
+                    <span class="badge badge-status-{{ d.status|lower|replace(' ', '-') }}">{{ d.status }}</span>
+                    <span class="badge badge-{{ d.priority|lower }}">{{ d.priority }}</span>
+                    <div style="font-size:0.9rem;margin-top:0.25rem;">{{ d.category }} · {{ d.location }}</div>
+                    <div style="font-size:0.8rem;color:var(--slate-500);">{{ format_ph(d.created_at) }}</div>
+                    <a href="{{ url_for('track', tracking=d.tracking_number) }}" class="btn btn-sm btn-outline" style="margin-top:0.4rem;">
+                        Track this case
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="card">
+            <h3>Still want to submit?</h3>
+            <p class="field-hint">If this is a different issue, confirm below to file a new complaint.</p>
+            <form method="POST" action="{{ url_for('submit_complaint') }}" enctype="multipart/form-data" class="action-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="force_submit" value="1">
+                <input type="hidden" name="category" value="{{ form.category }}">
+                <input type="hidden" name="location" value="{{ form.location }}">
+                <input type="hidden" name="description" value="{{ form.description }}">
+                <input type="hidden" name="priority" value="{{ form.priority }}">
+                <input type="hidden" name="resident_name" value="{{ form.resident_name }}">
+                <input type="hidden" name="resident_contact" value="{{ form.resident_contact }}">
+                {% if form.latitude %}<input type="hidden" name="latitude" value="{{ form.latitude }}">{% endif %}
+                {% if form.longitude %}<input type="hidden" name="longitude" value="{{ form.longitude }}">{% endif %}
+                <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.75rem;">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-paper-plane"></i> Submit new complaint anyway
+                    </button>
+                    <a href="{{ url_for('submit_complaint') }}" class="btn btn-outline">Cancel / edit</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,404 @@
+{% extends "base.html" %}
+{% block body_class %}{% endblock %}
+{% block title %}Manage {{ complaint.tracking_number }} — Admin{% endblock %}
+
+{% block content %}
+<section class="admin-section">
+    <div class="container admin-detail-layout">
+        <div class="card detail-card">
+            <div class="detail-header">
+                <div>
+                    <h2>{{ complaint.tracking_number }}</h2>
+                    <span class="badge badge-status-{{ complaint.status|lower|replace(' ', '-') }}">
+                        {{ complaint.status }}
+                    </span>
+                    <span class="badge badge-{{ complaint.priority|lower }}">{{ complaint.priority }}</span>
+                    {% if complaint.is_escalated %}
+                    <span class="badge badge-urgent"><i class="fa-solid fa-triangle-exclamation"></i> Escalated</span>
+                    {% endif %}
+                    {% if complaint.due_at and complaint.status not in ['Resolved', 'Confirmed'] %}
+                        {% set due_ts = complaint.due_at.timestamp() if complaint.due_at is not string else none %}
+                        {% if overdue %}
+                        <span class="badge badge-urgent"><i class="fa-solid fa-clock"></i> Overdue</span>
+                        {% else %}
+                        <span class="badge badge-status-verified">Due {{ format_ph(complaint.due_at, '%b %d') }}</span>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="detail-body">
+                <div class="detail-row">
+                    <span class="detail-label">Category</span>
+                    <span class="detail-value">{{ complaint.category }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Location</span>
+                    <span class="detail-value">{{ complaint.location }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Description</span>
+                    <span class="detail-value">{{ complaint.description }}</span>
+                </div>
+                {% if complaint.resident_name %}
+                <div class="detail-row">
+                    <span class="detail-label">Resident</span>
+                    <span class="detail-value">{{ complaint.resident_name }}</span>
+                </div>
+                {% endif %}
+                {% if complaint.resident_contact %}
+                <div class="detail-row">
+                    <span class="detail-label">Contact</span>
+                    <span class="detail-value">{{ complaint.resident_contact }}</span>
+                </div>
+                {% endif %}
+                
+                {% if complaint.latitude and complaint.longitude %}
+                <div class="detail-row detail-row-full">
+                    <span class="detail-label"><i class="fa-solid fa-map-location-dot"></i> Location &amp; Route</span>
+                    <span class="detail-value">
+                        <div class="route-panel">
+                            <div id="adminMap" class="map-el map-el-route"
+                                 data-lat="{{ complaint.latitude }}"
+                                 data-lng="{{ complaint.longitude }}"
+                                 data-tracking="{{ complaint.tracking_number }}"
+                                 data-location="{{ complaint.location }}"></div>
+                            <div class="route-toolbar">
+                                <button type="button" class="btn btn-primary btn-sm" id="btnRouteToComplaint">
+                                    <i class="fa-solid fa-motorcycle"></i> Route from my location
+                                </button>
+                                <a class="btn btn-outline btn-sm" id="btnOpenGoogleMaps" target="_blank" rel="noopener"
+                                   href="https://www.google.com/maps/dir/?api=1&destination={{ complaint.latitude }},{{ complaint.longitude }}&travelmode=driving">
+                                    <i class="fa-solid fa-diamond-turn-right"></i> Open in Google Maps
+                                </a>
+                                <a class="btn btn-outline btn-sm" target="_blank" rel="noopener"
+                                   href="https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route={{ complaint.latitude }}%2C{{ complaint.longitude }}#map=16/{{ complaint.latitude }}/{{ complaint.longitude }}">
+                                    <i class="fa-solid fa-route"></i> OSM Directions
+                                </a>
+                            </div>
+                            <p class="route-status" id="routeStatus">
+                                Complaint pin is shown. Tap <strong>Route from my location</strong> to draw the driving path and place a motorcycle marker at your position.
+                            </p>
+                            <p class="map-coords" id="adminMapCoords">
+                                Destination: {{ "%.6f"|format(complaint.latitude) }}, {{ "%.6f"|format(complaint.longitude) }}
+                            </p>
+                        </div>
+                    </span>
+                </div>
+                {% endif %}
+
+                <div class="detail-row">
+                    <span class="detail-label">Assigned To</span>
+                    <span class="detail-value">{{ complaint.assigned_personnel or '—' }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Due date</span>
+                    <span class="detail-value">
+                        {% if complaint.due_at %}
+                            {{ format_ph(complaint.due_at) }}
+                            {% if overdue %}<span class="badge badge-urgent" style="margin-left:0.4rem;">Overdue</span>{% endif %}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </span>
+                </div>
+                {% if complaint.resolution_remarks %}
+                <div class="detail-row">
+                    <span class="detail-label">Resolution remarks</span>
+                    <span class="detail-value">{{ complaint.resolution_remarks }}</span>
+                </div>
+                {% endif %}
+
+                <!-- Before / after evidence -->
+                <div class="detail-row detail-row-full">
+                    <span class="detail-label"><i class="fa-solid fa-images"></i> Evidence</span>
+                    <span class="detail-value">
+                        <div class="evidence-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.75rem;">
+                            {% if complaint.photo_path %}
+                            <figure style="margin:0;">
+                                <figcaption style="font-size:0.75rem;color:var(--slate-500);margin-bottom:0.35rem;">Before</figcaption>
+                                <a href="{{ url_for('serve_upload', filename=complaint.photo_path.replace('uploads/', '')) }}" target="_blank" rel="noopener">
+                                    <img src="{{ url_for('serve_upload', filename=complaint.photo_path.replace('uploads/', '')) }}"
+                                         alt="Before photo" class="complaint-photo">
+                                </a>
+                            </figure>
+                            {% endif %}
+                            {% if complaint.resolution_photo_path %}
+                            <figure style="margin:0;">
+                                <figcaption style="font-size:0.75rem;color:var(--slate-500);margin-bottom:0.35rem;">Resolution</figcaption>
+                                <a href="{{ url_for('serve_upload', filename=complaint.resolution_photo_path.replace('uploads/', '')) }}" target="_blank" rel="noopener">
+                                    <img src="{{ url_for('serve_upload', filename=complaint.resolution_photo_path.replace('uploads/', '')) }}"
+                                         alt="Resolution photo" class="complaint-photo">
+                                </a>
+                            </figure>
+                            {% endif %}
+                            {% if complaint.after_photo_path %}
+                            <figure style="margin:0;">
+                                <figcaption style="font-size:0.75rem;color:var(--slate-500);margin-bottom:0.35rem;">After</figcaption>
+                                <a href="{{ url_for('serve_upload', filename=complaint.after_photo_path.replace('uploads/', '')) }}" target="_blank" rel="noopener">
+                                    <img src="{{ url_for('serve_upload', filename=complaint.after_photo_path.replace('uploads/', '')) }}"
+                                         alt="After photo" class="complaint-photo">
+                                </a>
+                            </figure>
+                            {% endif %}
+                            {% if not complaint.photo_path and not complaint.resolution_photo_path and not complaint.after_photo_path %}
+                            <span class="field-hint">No photos yet.</span>
+                            {% endif %}
+                        </div>
+                    </span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Created</span>
+                    <span class="detail-value">
+                        {{ format_ph(complaint.created_at) }}
+                    </span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Updated</span>
+                    <span class="detail-value">
+                        {{ format_ph(complaint.updated_at) }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Messages -->
+            <div class="messages-section">
+                <h3><i class="fa-solid fa-comments"></i> Conversation</h3>
+                <div class="messages-thread">
+                    {% if messages %}
+                        {% for m in messages %}
+                        <div class="message-bubble {% if m.sender_type == 'resident' %}message-resident{% else %}message-admin{% endif %}">
+                            <div class="message-meta">
+                                <strong>{{ m.sender_name }}</strong>
+                                <span class="message-role">({{ m.sender_type }})</span>
+                                <span class="message-time">
+                                    {{ format_ph(m.created_at) }}
+                                </span>
+                            </div>
+                            <div class="message-body">{{ m.body }}</div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="messages-empty">No messages yet.</p>
+                    {% endif %}
+                </div>
+                <form method="POST" class="message-form action-form" data-loader="Sending...">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="action" value="send_message">
+                    <div class="form-group">
+                        <label for="admin_body">Reply to resident</label>
+                        <textarea id="admin_body" name="body" rows="3" required maxlength="1000"
+                                  placeholder="Type your reply..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-paper-plane"></i> Send Reply
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card actions-card">
+            <h3><i class="fa-solid fa-bolt"></i> Quick Actions</h3>
+
+            {% if complaint.status == 'Submitted' %}
+            <form method="POST" class="action-form" data-loader="Verifying...">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="verify">
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fa-solid fa-clipboard-check"></i> Verify Complaint
+                </button>
+            </form>
+            {% endif %}
+
+            {% if complaint.status in ['Verified', 'Submitted'] %}
+            <form method="POST" class="action-form" data-loader="Assigning...">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="assign">
+                <div class="form-group">
+                    <label for="assigned_staff_id">Assign staff</label>
+                    <select id="assigned_staff_id" name="assigned_staff_id" required>
+                        <option value="">Select staff…</option>
+                        {% for s in staff_list or [] %}
+                        <option value="{{ s.id }}" {% if complaint.assigned_staff_id == s.id %}selected{% endif %}>
+                            {{ s.full_name }}{% if s.staff_code %} ({{ s.staff_code }}){% endif %} · {{ s.role }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fa-solid fa-user-plus"></i> Assign
+                </button>
+            </form>
+            {% endif %}
+
+            {% if complaint.status in ['Assigned', 'Verified'] %}
+            <form method="POST" class="action-form" data-loader="Starting...">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="start">
+                <button type="submit" class="btn btn-warning btn-block">
+                    <i class="fa-solid fa-play"></i> Mark In Progress
+                </button>
+            </form>
+            {% endif %}
+
+            {% if complaint.status not in ['Resolved', 'Confirmed'] and not complaint.is_escalated %}
+            <form method="POST" class="action-form" data-loader="Escalating..." style="margin-top:0.75rem;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="escalate">
+                <div class="form-group">
+                    <label for="escalation_reason">Emergency escalation reason</label>
+                    <input type="text" id="escalation_reason" name="escalation_reason" maxlength="500"
+                           placeholder="e.g., Flood risk / public safety threat" required>
+                </div>
+                <button type="submit" class="btn btn-outline btn-block" style="border-color:#ef4444;color:#ef4444;">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Escalate to urgent
+                </button>
+            </form>
+            {% elif complaint.is_escalated %}
+            <p class="field-hint" style="margin-top:0.5rem;">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                Escalated{% if complaint.escalated_at %} {{ format_ph(complaint.escalated_at) }}{% endif %}
+                {% if complaint.escalation_reason %}: {{ complaint.escalation_reason }}{% endif %}
+            </p>
+            {% endif %}
+
+            {% if complaint.status in ['Assigned', 'In Progress', 'Verified'] %}
+            <form method="POST" class="action-form" data-loader="Reassigning..." style="margin-top:0.75rem;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="reassign">
+                <div class="form-group">
+                    <label for="reassign_staff_id">Reassign to</label>
+                    <select id="reassign_staff_id" name="assigned_staff_id" required>
+                        <option value="">Select staff…</option>
+                        {% for s in staff_list or [] %}
+                        <option value="{{ s.id }}" {% if complaint.assigned_staff_id == s.id %}selected{% endif %}>
+                            {{ s.full_name }}{% if s.staff_code %} ({{ s.staff_code }}){% endif %} · {{ s.role }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="reassign_reason">Reason</label>
+                    <input type="text" id="reassign_reason" name="reassign_reason" maxlength="300"
+                           placeholder="Optional reason for reassignment">
+                </div>
+                <div class="form-group">
+                    <label for="reassign_priority">Priority (optional)</label>
+                    <select id="reassign_priority" name="priority">
+                        <option value="">Keep current ({{ complaint.priority }})</option>
+                        {% for p in priorities %}
+                        <option value="{{ p }}">{{ p }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-outline btn-block">
+                    <i class="fa-solid fa-user-pen"></i> Reassign
+                </button>
+            </form>
+            {% endif %}
+
+            {% if complaint.status == 'In Progress' %}
+            <form method="POST" class="action-form" data-loader="Resolving..." enctype="multipart/form-data" style="margin-top:0.75rem;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="resolve">
+                <div class="form-group">
+                    <label for="resolution_remarks">Resolution remarks <span class="required">*</span></label>
+                    <textarea id="resolution_remarks" name="resolution_remarks" required rows="3"
+                              maxlength="3000" placeholder="What was done to resolve the issue?"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="resolution_photo">Resolution photo</label>
+                    <input type="file" id="resolution_photo" name="resolution_photo" accept="image/*">
+                    <small class="field-hint">Optional work/proof photo</small>
+                </div>
+                <div class="form-group">
+                    <label for="after_photo">After photo</label>
+                    <input type="file" id="after_photo" name="after_photo" accept="image/*">
+                    <small class="field-hint">Optional before/after comparison</small>
+                </div>
+                <button type="submit" class="btn btn-success btn-block">
+                    <i class="fa-solid fa-circle-check"></i> Mark Resolved
+                </button>
+            </form>
+            {% endif %}
+
+            <hr class="divider">
+
+            <h3><i class="fa-solid fa-sliders"></i> Manual Update</h3>
+            <form method="POST" class="action-form" data-loader="Saving...">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="update">
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select id="status" name="status">
+                        {% for s in statuses %}
+                        <option value="{{ s }}" {% if complaint.status == s %}selected{% endif %}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="priority">Priority</label>
+                    <select id="priority" name="priority">
+                        {% for p in priorities %}
+                        <option value="{{ p }}" {% if complaint.priority == p %}selected{% endif %}>{{ p }}</option>
+                        {% endfor %}
+                    </select>
+                    <small class="field-hint">Changing priority resets due date (Urgent 1d · Normal 3d · Low 7d)</small>
+                </div>
+                <div class="form-group">
+                    <label for="due_at">Due date</label>
+                    <input type="date" id="due_at" name="due_at"
+                           value="{{ complaint.due_at.strftime('%Y-%m-%d') if complaint.due_at else '' }}">
+                </div>
+                <div class="form-group">
+                    <label for="assigned_personnel2">Assigned Personnel</label>
+                    <input type="text" id="assigned_personnel2" name="assigned_personnel"
+                           value="{{ complaint.assigned_personnel or '' }}"
+                           placeholder="Name or team" maxlength="150">
+                </div>
+                <button type="submit" class="btn btn-outline btn-block">
+                    <i class="fa-solid fa-floppy-disk"></i> Save Changes
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Complaint history timeline -->
+    <div class="container" style="margin-top:1.5rem;max-width:960px;">
+        <div class="card">
+            {% if feedback %}
+            <div style="margin-bottom:1rem;padding:0.75rem;background:var(--primary-soft);border-radius:12px;">
+                <strong><i class="fa-solid fa-star"></i> Resident feedback:</strong>
+                {{ feedback.rating }}★
+                {% if feedback.comment %}<div style="margin-top:0.35rem;">{{ feedback.comment }}</div>{% endif %}
+            </div>
+            {% endif %}
+            <h3><i class="fa-solid fa-clock-rotate-left"></i> Complaint history</h3>
+            {% if history %}
+            <ul class="history-list" style="list-style:none;padding:0;margin:0.75rem 0 0;">
+                {% for h in history %}
+                <li style="padding:0.65rem 0;border-bottom:1px solid var(--slate-100);font-size:0.9rem;">
+                    <strong>
+                        {% if h.old_status and h.new_status %}
+                            {{ h.old_status }} → {{ h.new_status }}
+                        {% elif h.new_status %}
+                            {{ h.new_status }}
+                        {% else %}
+                            Update
+                        {% endif %}
+                    </strong>
+                    <span style="color:var(--slate-500);"> by {{ h.changed_by_name }}</span>
+                    {% if h.note %}<div style="color:var(--slate-600);margin-top:0.2rem;">{{ h.note }}</div>{% endif %}
+                    <div style="color:var(--slate-400);font-size:0.8rem;margin-top:0.15rem;">{{ format_ph(h.created_at) }}</div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="field-hint" style="margin-top:0.75rem;">No history recorded yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+
+

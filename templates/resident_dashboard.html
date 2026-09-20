@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}My Complaints — Barangay Care{% endblock %}
+{% block body_class %}has-bottom-nav{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div class="container">
+        <h1><i class="fa-solid fa-folder-open"></i> My Dashboard</h1>
+        <p>Hello, {{ resident_name }}. Track your cases, messages, and notifications.</p>
+    </div>
+</section>
+
+<section class="form-section">
+    <div class="container">
+        <!-- Stats -->
+        <div class="stats-grid" style="margin-bottom:1.5rem;">
+            <div class="stat-card">
+                <div class="stat-value">{{ stats.total }}</div>
+                <div class="stat-label">Total</div>
+            </div>
+            <div class="stat-card stat-progress">
+                <div class="stat-value">{{ stats.open }}</div>
+                <div class="stat-label">Open</div>
+            </div>
+            <div class="stat-card stat-resolved">
+                <div class="stat-value">{{ stats.resolved }}</div>
+                <div class="stat-label">Resolved</div>
+            </div>
+            <div class="stat-card stat-confirmed">
+                <div class="stat-value">{{ stats.confirmed }}</div>
+                <div class="stat-label">Confirmed</div>
+            </div>
+        </div>
+
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1.25rem;align-items:center;">
+            <a href="{{ url_for('submit_complaint') }}" class="btn btn-primary">
+                <i class="fa-solid fa-pen-to-square"></i> Submit new
+            </a>
+            <a href="{{ url_for('resident_notifications') }}" class="btn btn-outline">
+                <i class="fa-solid fa-bell"></i> Notifications
+                {% if unread_notifications %}<span class="badge badge-urgent">{{ unread_notifications }}</span>{% endif %}
+            </a>
+            <a href="{{ url_for('resident_logout') }}" class="btn btn-outline">
+                <i class="fa-solid fa-right-from-bracket"></i> Log out
+            </a>
+        </div>
+
+        <!-- Status filters -->
+        <div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:1rem;">
+            <a href="{{ url_for('resident_dashboard') }}"
+               class="badge {% if not current_status %}badge-status-verified{% else %}badge-status-submitted{% endif %}">
+                All
+            </a>
+            {% for s in statuses %}
+            <a href="{{ url_for('resident_dashboard', status=s) }}"
+               class="badge badge-status-{{ s|lower|replace(' ', '-') }} {% if current_status == s %}badge-status-verified{% endif %}">
+                {{ s }}
+            </a>
+            {% endfor %}
+        </div>
+
+        {% if notifications %}
+        <div class="card" style="margin-bottom:1.25rem;">
+            <h3 style="font-size:1rem;margin-bottom:0.75rem;"><i class="fa-solid fa-bell"></i> Recent notifications</h3>
+            <ul style="list-style:none;padding:0;margin:0;">
+                {% for n in notifications[:5] %}
+                <li style="padding:0.55rem 0;border-bottom:1px solid var(--slate-100);font-size:0.9rem;">
+                    {% if not n.is_read %}<strong>{% endif %}
+                    {{ n.title }}
+                    {% if not n.is_read %}</strong>{% endif %}
+                    <div style="color:var(--slate-500);font-size:0.8rem;">{{ format_ph(n.created_at) }}</div>
+                </li>
+                {% endfor %}
+            </ul>
+            <a href="{{ url_for('resident_notifications') }}" style="font-size:0.85rem;">View all</a>
+        </div>
+        {% endif %}
+
+        {% if complaints %}
+        <div class="records-grid">
+            {% for c in complaints %}
+            <a class="record-card" href="{{ url_for('track', tracking=c.tracking_number) }}" style="text-decoration:none;color:inherit;">
+                <div class="record-card-top">
+                    <div class="record-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+                    <span class="badge badge-status-{{ (c.status or '')|lower|replace(' ', '-') }}">{{ c.status }}</span>
+                    {% if c.unread_msgs %}
+                    <span class="badge badge-urgent"><i class="fa-solid fa-comment"></i> {{ c.unread_msgs }}</span>
+                    {% endif %}
+                </div>
+                <div class="record-tracking">{{ c.tracking_number }}</div>
+                <div class="record-category">{{ c.category }}</div>
+                <div class="record-location"><i class="fa-solid fa-location-dot"></i> {{ c.location }}</div>
+                <div class="record-card-bottom">
+                    <span class="badge badge-{{ (c.priority or 'normal')|lower }}">{{ c.priority }}</span>
+                    <span class="record-date">{{ format_ph(c.created_at) }}</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="card empty-card">
+            <p class="text-center">
+                <i class="fa-solid fa-inbox"></i>
+                {% if current_status %}
+                No complaints with status {{ current_status }}.
+                {% else %}
+                You have no complaints yet.
+                <a href="{{ url_for('submit_complaint') }}">Submit one</a>.
+                {% endif %}
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

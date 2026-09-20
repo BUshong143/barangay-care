@@ -1,0 +1,347 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+.chart-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+    height: 260px;
+}
+.chart-wrap.tall { height: 280px; max-width: 100%; }
+@media (max-width: 480px) {
+    .chart-wrap { height: 220px; }
+    .chart-wrap.tall { height: 240px; }
+}
+.stats-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-top: 1rem;
+}
+.stats-summary .badge { font-size: 0.78rem; }
+.dash-charts { margin-bottom: 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="admin-section">
+    <div class="container">
+        <div class="stats-grid" style="margin-bottom:1.25rem;">
+            <div class="stat-card">
+                <div class="stat-value">{{ resolution_rate or 0 }}%</div>
+                <div class="stat-label">Resolution rate</div>
+            </div>
+            <div class="stat-card stat-progress">
+                <div class="stat-value">{{ overdue_count or 0 }}</div>
+                <div class="stat-label">Overdue</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{% if avg_rating %}{{ avg_rating }}★{% else %}—{% endif %}</div>
+                <div class="stat-label">Avg rating {% if feedback_n %}({{ feedback_n }}){% endif %}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ unread_total or 0 }}</div>
+                <div class="stat-label">Unread msgs</div>
+            </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;">
+            <a href="{{ url_for('admin_map') }}" class="btn btn-sm btn-outline"><i class="fa-solid fa-map"></i> Map</a>
+            <a href="{{ url_for('admin_reports') }}" class="btn btn-sm btn-outline"><i class="fa-solid fa-chart-line"></i> Reports</a>
+            <a href="{{ url_for('admin_export_csv') }}" class="btn btn-sm btn-outline"><i class="fa-solid fa-file-csv"></i> CSV</a>
+            <a href="{{ url_for('admin_export_xlsx') }}" class="btn btn-sm btn-outline"><i class="fa-solid fa-file-excel"></i> Excel</a>
+        </div>
+        <div class="dash-grid dash-charts">
+            <!-- Status chart -->
+            <div class="card dash-panel">
+                <div class="dash-panel-header">
+                    <h2><i class="fa-solid fa-chart-pie"></i> Cases by Status</h2>
+                </div>
+                <div class="chart-wrap">
+                    <canvas id="statusChart" aria-label="Cases by status chart" role="img"></canvas>
+                </div>
+                <div class="stats-summary" id="statusSummary">
+                    {% for s in statuses %}
+                    <a href="{{ url_for('admin_dashboard', status=s) }}" class="badge badge-status-{{ s|lower|replace(' ', '-') }}">
+                        {{ s }}: {{ stats.get(s, 0) }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Category chart -->
+            <div class="card dash-panel">
+                <div class="dash-panel-header">
+                    <h2><i class="fa-solid fa-chart-simple"></i> Open Cases by Category</h2>
+                </div>
+                {% if category_counts %}
+                <div class="chart-wrap tall">
+                    <canvas id="categoryChart" aria-label="Open cases by category chart" role="img"></canvas>
+                </div>
+                {% else %}
+                <div class="dash-empty">
+                    <i class="fa-solid fa-inbox"></i>
+                    No open cases to break down yet.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        
+        {% if monthly %}
+        <div class="card dash-panel" style="margin-top:1.25rem;">
+            <div class="dash-panel-header">
+                <h2><i class="fa-solid fa-calendar"></i> Monthly volume (12 mo)</h2>
+            </div>
+            <div class="chart-wrap tall">
+                <canvas id="monthlyChart" aria-label="Monthly complaints chart" role="img"></canvas>
+            </div>
+        </div>
+        {% endif %}
+
+<div class="dash-grid" style="margin-top:1.25rem;">
+            <!-- Needs attention -->
+            <div class="card dash-panel">
+                <div class="dash-panel-header">
+                    <h2><i class="fa-solid fa-triangle-exclamation"></i> Needs Attention</h2>
+                    <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+                    {% if overdue_count %}
+                    <span class="badge badge-urgent" title="Past due date">
+                        <i class="fa-solid fa-clock"></i> {{ overdue_count }} overdue
+                    </span>
+                    {% endif %}
+                    {% if unread_total %}
+                    <span class="badge badge-urgent" title="Unread resident messages">
+                        <i class="fa-solid fa-comment-dots"></i> {{ unread_total }} unread
+                    </span>
+                    {% endif %}
+                    </div>
+                </div>
+                {% if needs_attention %}
+                <ul class="attention-list">
+                    {% for c in needs_attention %}
+                    <li>
+                        <a href="{{ url_for('admin_complaint', complaint_id=c.id) }}" class="attention-item">
+                            <span class="attention-main">
+                                <span class="attention-tracking">{{ c.tracking_number }}</span>
+                                <span class="attention-cat">{{ c.category }} · {{ c.location }}</span>
+                            </span>
+                            <span class="attention-badges">
+                                {% if c.priority == 'Urgent' %}
+                                <span class="badge badge-urgent">Urgent</span>
+                                {% endif %}
+                                <span class="badge badge-status-{{ c.status|lower|replace(' ', '-') }}">{{ c.status }}</span>
+                            </span>
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="dash-empty">
+                    <i class="fa-solid fa-circle-check"></i>
+                    Nothing urgent right now — all caught up.
+                </div>
+                {% endif %}
+            </div>
+
+            {% if overdue_cases %}
+            <div class="card dash-panel">
+                <div class="dash-panel-header">
+                    <h2><i class="fa-solid fa-clock"></i> Overdue Cases</h2>
+                </div>
+                <ul class="dash-list">
+                    {% for c in overdue_cases %}
+                    <li>
+                        <a href="{{ url_for('admin_complaint', complaint_id=c.id) }}">
+                            <strong>{{ c.tracking_number }}</strong>
+                            <span>{{ c.category }} · {{ c.status }}</span>
+                            <span class="badge badge-urgent">Due {{ format_ph(c.due_at, '%b %d') }}</span>
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{{ url_for('static', filename='js/chart.umd.min.js') }}?v=1"></script>
+<script>
+(function () {
+    'use strict';
+
+    if (typeof Chart !== 'undefined') {
+        Chart.defaults.animation = false;
+        Chart.defaults.responsive = true;
+        Chart.defaults.maintainAspectRatio = false;
+    }
+
+    var statusLabels = {{ statuses|list|tojson }};
+    var statusData = statusLabels.map(function (s) {
+        return {{ stats|tojson }}[s] || 0;
+    });
+    var statusColors = [
+        '#94a3b8',  /* Submitted — neutral */
+        '#2dd4bf',  /* Verified — primary light */
+        '#6366f1',  /* Assigned — indigo */
+        '#f59e0b',  /* In Progress — warning */
+        '#10b981',  /* Resolved — success */
+        '#0891b2'   /* Confirmed — accent */
+    ];
+
+    function isDark() {
+        return document.documentElement.classList.contains('dark-mode');
+    }
+    function textColor() {
+        return isDark() ? '#f1f5f9' : '#334155';
+    }
+    function gridColor() {
+        return isDark() ? 'rgba(148,163,184,0.25)' : 'rgba(148,163,184,0.25)';
+    }
+
+    var statusChart = null;
+    var categoryChart = null;
+
+    function buildStatusChart() {
+        var ctx = document.getElementById('statusChart');
+        if (!ctx || typeof Chart === 'undefined') return;
+        if (statusChart) statusChart.destroy();
+        statusChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: statusLabels,
+                datasets: [{
+                    data: statusData,
+                    backgroundColor: statusColors,
+                    borderWidth: 2,
+                    borderColor: isDark() ? '#1e293b' : '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: textColor(),
+                            boxWidth: 12,
+                            padding: 12,
+                            font: { size: 11, family: "'Poppins', sans-serif" }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (ctx) {
+                                var total = ctx.dataset.data.reduce(function (a, b) { return a + b; }, 0);
+                                var pct = total ? Math.round((ctx.raw / total) * 100) : 0;
+                                return ctx.label + ': ' + ctx.raw + ' (' + pct + '%)';
+                            }
+                        }
+                    }
+                },
+                cutout: '58%'
+            }
+        });
+    }
+
+    function buildCategoryChart() {
+        var ctx = document.getElementById('categoryChart');
+        if (!ctx || typeof Chart === 'undefined') return;
+        var catData = {{ category_counts|tojson if category_counts else '[]' }};
+        if (!catData.length) return;
+        var labels = catData.map(function (r) { return r.category; });
+        var values = catData.map(function (r) { return r.cnt; });
+        if (categoryChart) categoryChart.destroy();
+        categoryChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Open cases',
+                    data: values,
+                    backgroundColor: 'rgba(13, 148, 136, 0.75)',
+                    borderColor: '#0d9488',
+                    borderWidth: 1,
+                    borderRadius: 6,
+                    maxBarThickness: 48
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: function (c) { return c.raw + ' open'; } } }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: { color: textColor(), precision: 0, font: { size: 11 } },
+                        grid: { color: gridColor() }
+                    },
+                    y: {
+                        ticks: { color: textColor(), font: { size: 11, family: "'Poppins', sans-serif" } },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
+    function buildMonthlyChart() {
+        var ctx = document.getElementById('monthlyChart');
+        if (!ctx || typeof Chart === 'undefined') return;
+        var monthly = {{ monthly|tojson if monthly else '[]' }};
+        if (!monthly || !monthly.length) return;
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: monthly.map(function (r) { return r.ym; }),
+                datasets: [
+                    { label: 'Filed', data: monthly.map(function (r) { return r.total; }), backgroundColor: 'rgba(13,148,136,0.75)', borderRadius: 6 },
+                    { label: 'Closed', data: monthly.map(function (r) { return r.closed; }), backgroundColor: 'rgba(16,185,129,0.45)', borderRadius: 6 }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision: 0, color: textColor() }, grid: { color: gridColor() } },
+                    x: { ticks: { color: textColor() }, grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    function rebuildCharts() {
+        buildStatusChart();
+        buildCategoryChart();
+        buildMonthlyChart();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', rebuildCharts);
+    } else {
+        rebuildCharts();
+    }
+
+    var themeBtn = document.getElementById('themeToggle');
+    if (themeBtn) {
+        themeBtn.addEventListener('click', function () {
+            setTimeout(rebuildCharts, 50);
+        });
+    }
+})();
+</script>
+{% endblock %}

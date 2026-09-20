@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Complaint Map — Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+#complaintsMap { height: 70vh; min-height: 420px; border-radius: 16px; z-index: 1; }
+.map-toolbar { display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem; align-items:center; }
+.map-legend { font-size:0.85rem; color:var(--slate-600); }
+</style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+{% endblock %}
+
+{% block content %}
+<section class="admin-section">
+    <div class="container">
+        <div class="card">
+            <div class="dash-panel-header" style="margin-bottom:0.75rem;">
+                <h2><i class="fa-solid fa-map-location-dot"></i> Complaint Map &amp; Hotspots</h2>
+                <span class="map-legend">{{ points|length }} geo-tagged case{{ 's' if points|length != 1 else '' }}</span>
+            </div>
+            <div class="map-toolbar">
+                <a href="{{ url_for('admin_map', open='1') }}" class="btn btn-sm {% if open_only %}btn-primary{% else %}btn-outline{% endif %}">Open cases</a>
+                <a href="{{ url_for('admin_map', open='0') }}" class="btn btn-sm {% if not open_only %}btn-primary{% else %}btn-outline{% endif %}">All cases</a>
+                <button type="button" class="btn btn-sm btn-outline" id="btnToggleHeat">
+                    <i class="fa-solid fa-fire"></i> Toggle heatmap
+                </button>
+                <a href="{{ url_for('admin_stats_dashboard') }}" class="btn btn-sm btn-outline">Dashboard</a>
+            </div>
+            <div id="complaintsMap"></div>
+            <p class="field-hint" style="margin-top:0.75rem;">
+                Markers show individual complaints. Heatmap highlights geographic hotspots.
+            </p>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script>
+(function () {
+    var points = {{ points_json|tojson }};
+    if (typeof L === 'undefined') return;
+    var map = L.map('complaintsMap').setView([14.5995, 120.9842], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    var cluster = L.markerClusterGroup();
+    var heatData = [];
+    var bounds = [];
+    points.forEach(function (p) {
+        var m = L.marker([p.lat, p.lng]);
+        m.bindPopup(
+            '<strong>' + p.tracking + '</strong><br>' +
+            p.category + ' · ' + p.status + '<br>' +
+            (p.location || '') + '<br>' +
+            '<a href="/admin/complaint/' + p.id + '">Open case</a>'
+        );
+        cluster.addLayer(m);
+        heatData.push([p.lat, p.lng, p.priority === 'Urgent' ? 1.0 : 0.6]);
+        bounds.push([p.lat, p.lng]);
+    });
+    map.addLayer(cluster);
+    if (bounds.length) map.fitBounds(bounds, { padding: [30, 30], maxZoom: 15 });
+
+    var heatLayer = null;
+    var heatOn = false;
+    document.getElementById('btnToggleHeat').addEventListener('click', function () {
+        if (!window.L.heatLayer) return;
+        if (heatOn) {
+            if (heatLayer) map.removeLayer(heatLayer);
+            heatOn = false;
+            this.classList.remove('btn-primary');
+            this.classList.add('btn-outline');
+        } else {
+            heatLayer = L.heatLayer(heatData, { radius: 28, blur: 18, maxZoom: 17 });
+            map.addLayer(heatLayer);
+            heatOn = true;
+            this.classList.add('btn-primary');
+            this.classList.remove('btn-outline');
+        }
+    });
+})();
+</script>
+{% endblock %}

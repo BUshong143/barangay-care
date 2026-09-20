@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Reports — Admin{% endblock %}
+
+{% block content %}
+<section class="admin-section">
+    <div class="container">
+        <div class="card" style="margin-bottom:1.25rem;">
+            <h2><i class="fa-solid fa-chart-line"></i> Reports &amp; Exports</h2>
+            <form method="GET" class="action-form" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.75rem;margin-top:1rem;">
+                <div class="form-group">
+                    <label for="year">Year</label>
+                    <select id="year" name="year">
+                        {% for y in years %}
+                        <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="month">Month (optional)</label>
+                    <select id="month" name="month">
+                        <option value="">Full year</option>
+                        {% for m in months %}
+                        <option value="{{ m }}" {% if month == m %}selected{% endif %}>{{ m }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group" style="display:flex;align-items:flex-end;">
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-filter"></i> Apply</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="stats-grid" style="margin-bottom:1.25rem;">
+            <div class="stat-card"><div class="stat-value">{{ summary.total or 0 }}</div><div class="stat-label">Total</div></div>
+            <div class="stat-card stat-progress"><div class="stat-value">{{ summary.open or 0 }}</div><div class="stat-label">Open</div></div>
+            <div class="stat-card stat-resolved"><div class="stat-value">{{ summary.resolved or 0 }}</div><div class="stat-label">Resolved</div></div>
+            <div class="stat-card stat-confirmed"><div class="stat-value">{{ summary.confirmed or 0 }}</div><div class="stat-label">Confirmed</div></div>
+            {% if summary.avg_rating %}
+            <div class="stat-card"><div class="stat-value">{{ summary.avg_rating }}★</div><div class="stat-label">Avg rating</div></div>
+            {% endif %}
+        </div>
+
+        <div class="dash-grid">
+            <div class="card">
+                <h3>By status</h3>
+                <ul style="list-style:none;padding:0;margin:0.75rem 0 0;">
+                    {% for s in summary.by_status %}
+                    <li style="display:flex;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid var(--slate-100);">
+                        <span>{{ s.status }}</span><strong>{{ s.cnt }}</strong>
+                    </li>
+                    {% else %}
+                    <li class="field-hint">No data for this period.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="card">
+                <h3>By category</h3>
+                <ul style="list-style:none;padding:0;margin:0.75rem 0 0;">
+                    {% for c in summary.by_category %}
+                    <li style="display:flex;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid var(--slate-100);">
+                        <span>{{ c.category }}</span><strong>{{ c.cnt }}</strong>
+                    </li>
+                    {% else %}
+                    <li class="field-hint">No data for this period.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top:1.25rem;">
+            <h3><i class="fa-solid fa-download"></i> Download</h3>
+            <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.75rem;">
+                <a class="btn btn-primary" href="{{ url_for('admin_reports_pdf', year=year, month=month or '') }}">
+                    <i class="fa-solid fa-file-pdf"></i> PDF report
+                </a>
+                <a class="btn btn-outline" href="{{ url_for('admin_export_csv', year=year, month=month or '') }}">
+                    <i class="fa-solid fa-file-csv"></i> CSV export
+                </a>
+                <a class="btn btn-outline" href="{{ url_for('admin_export_xlsx', year=year, month=month or '') }}">
+                    <i class="fa-solid fa-file-excel"></i> Excel export
+                </a>
+            </div>
+            <p class="field-hint" style="margin-top:0.75rem;">
+                Exports respect the selected year/month and your role scope.
+            </p>
+        </div>
+    </div>
+</section>
+{% endblock %}

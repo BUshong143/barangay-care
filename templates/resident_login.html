@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Resident Login — Barangay Care{% endblock %}
+{% block body_class %}has-bottom-nav{% endblock %}
+
+{% block content %}
+<section class="form-section">
+    <div class="container">
+        <div class="card form-card" style="max-width:420px;margin:2rem auto;">
+            <h1 style="font-size:1.35rem;margin-bottom:0.35rem;"><i class="fa-solid fa-user"></i> Resident Login</h1>
+            <p class="field-hint" style="margin-bottom:1.25rem;">Access your complaint history and submit linked reports.</p>
+            <form method="POST" class="action-form" data-loader="Signing in...">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required maxlength="150"
+                           placeholder="you@email.com" autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required minlength="8"
+                           placeholder="Your password" autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;">
+                    <i class="fa-solid fa-right-to-bracket"></i> Log in
+                </button>
+            </form>
+            <p class="text-center" style="margin-top:1.25rem;font-size:0.9rem;">
+                No account?
+                <a href="{{ url_for('resident_register') }}">Register</a>
+            </p>
+        </div>
+    </div>
+</section>
+{% endblock %}

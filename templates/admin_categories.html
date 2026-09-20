@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Categories — Admin{% endblock %}
+
+{% block content %}
+<section class="admin-section">
+    <div class="container admin-detail-layout">
+        <div class="card">
+            <h3><i class="fa-solid fa-tags"></i> Add category</h3>
+            <form method="POST" class="action-form" data-loader="Saving...">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="create">
+                <div class="form-group">
+                    <label for="name">Name <span class="required">*</span></label>
+                    <input type="text" id="name" name="name" required maxlength="100" placeholder="e.g., Flooding">
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <input type="text" id="description" name="description" maxlength="255" placeholder="Optional">
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-plus"></i> Create
+                </button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h3><i class="fa-solid fa-list"></i> All categories</h3>
+            {% if categories %}
+            <ul style="list-style:none;padding:0;margin:0.75rem 0 0;">
+                {% for c in categories %}
+                <li style="padding:0.75rem 0;border-bottom:1px solid var(--slate-100);display:flex;justify-content:space-between;gap:0.75rem;flex-wrap:wrap;align-items:center;">
+                    <div>
+                        <strong>{{ c.name }}</strong>
+                        {% if c.is_active %}
+                        <span class="badge badge-status-resolved">Active</span>
+                        {% else %}
+                        <span class="badge badge-urgent">Inactive</span>
+                        {% endif %}
+                        <span class="field-hint">{{ c.usage_count }} complaint(s)</span>
+                        {% if c.description %}<div class="field-hint">{{ c.description }}</div>{% endif %}
+                    </div>
+                    <div style="display:flex;gap:0.35rem;">
+                        <form method="POST" class="inline-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="action" value="toggle">
+                            <input type="hidden" name="category_id" value="{{ c.id }}">
+                            <button type="submit" class="btn btn-sm btn-outline">
+                                {% if c.is_active %}Deactivate{% else %}Activate{% endif %}
+                            </button>
+                        </form>
+                        {% if c.usage_count == 0 %}
+                        <form method="POST" class="inline-form" onsubmit="return confirm('Delete this category?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="category_id" value="{{ c.id }}">
+                            <button type="submit" class="btn btn-sm btn-outline">Delete</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="field-hint">No categories yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}

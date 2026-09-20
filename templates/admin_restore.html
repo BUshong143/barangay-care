@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Backup & Restore — Admin{% endblock %}
+
+{% block content %}
+<section class="admin-section">
+    <div class="container" style="max-width:640px;">
+        <div class="card" style="margin-bottom:1.25rem;">
+            <h2><i class="fa-solid fa-database"></i> Backup</h2>
+            <p class="field-hint">Download a JSON snapshot of categories, staff, residents, complaints, messages, history, feedback, notifications, and activity logs.</p>
+            <a href="{{ url_for('admin_backup') }}" class="btn btn-primary">
+                <i class="fa-solid fa-download"></i> Download backup JSON
+            </a>
+        </div>
+
+        <div class="card">
+            <h2><i class="fa-solid fa-upload"></i> Restore</h2>
+            <p class="field-hint">
+                Upload a previous backup JSON. Categories are upserted; missing staff accounts are inserted.
+                Restores categories, missing staff/residents, and complaints by tracking number (skips duplicates).
+                Messages are re-linked when possible. For a full wipe-and-restore, use a PostgreSQL dump.
+            </p>
+            <form method="POST" enctype="multipart/form-data" class="action-form" data-loader="Restoring...">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group">
+                    <label for="backup_file">Backup file</label>
+                    <input type="file" id="backup_file" name="backup_file" accept=".json,application/json" required>
+                </div>
+                <button type="submit" class="btn btn-outline"
+                        onclick="return confirm('Restore categories/staff from this file?');">
+                    <i class="fa-solid fa-rotate-left"></i> Restore
+                </button>
+            </form>
+        </div>
+
+        <div class="card" style="margin-top:1.25rem;">
+            <h2><i class="fa-solid fa-server"></i> Full database disaster recovery</h2>
+            <p class="field-hint">
+                JSON export is for portable data. For production recovery of schema, indexes,
+                sequences, and foreign keys, use PostgreSQL:
+            </p>
+            <pre style="background:var(--slate-100);padding:0.75rem;border-radius:8px;font-size:0.8rem;overflow:auto;">pg_dump "$DATABASE_URL" -Fc -f backup.dump
+pg_restore -d "$DATABASE_URL" --clean --if-exists backup.dump</pre>
+        </div>
+    </div>
+</section>
+{% endblock %}

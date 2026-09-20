@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Resident Register — Barangay Care{% endblock %}
+{% block body_class %}has-bottom-nav{% endblock %}
+
+{% block content %}
+<section class="form-section">
+    <div class="container">
+        <div class="card form-card" style="max-width:480px;margin:2rem auto;">
+            <h1 style="font-size:1.35rem;margin-bottom:0.35rem;"><i class="fa-solid fa-user-plus"></i> Create Resident Account</h1>
+            <p class="field-hint" style="margin-bottom:1.25rem;">Register to track your complaints in one place.</p>
+            <form method="POST" class="action-form" data-loader="Creating account...">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group">
+                    <label for="full_name">Full name <span class="required">*</span></label>
+                    <input type="text" id="full_name" name="full_name" required maxlength="150"
+                           placeholder="Juan Dela Cruz" autocomplete="name">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email <span class="required">*</span></label>
+                    <input type="email" id="email" name="email" required maxlength="150"
+                           placeholder="you@email.com" autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label for="contact">Contact number</label>
+                    <input type="text" id="contact" name="contact" maxlength="100"
+                           placeholder="09XXXXXXXXX" autocomplete="tel">
+                </div>
+                <div class="form-group">
+                    <label for="address">Address</label>
+                    <input type="text" id="address" name="address" maxlength="255"
+                           placeholder="Purok / Street, Barangay">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password <span class="required">*</span></label>
+                    <input type="password" id="password" name="password" required minlength="8"
+                           placeholder="At least 8 characters" autocomplete="new-password">
+                </div>
+                <div class="form-group">
+                    <label for="password2">Confirm password <span class="required">*</span></label>
+                    <input type="password" id="password2" name="password2" required minlength="8"
+                           placeholder="Repeat password" autocomplete="new-password">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;">
+                    <i class="fa-solid fa-check"></i> Register
+                </button>
+            </form>
+            <p class="text-center" style="margin-top:1.25rem;font-size:0.9rem;">
+                Already have an account?
+                <a href="{{ url_for('resident_login') }}">Log in</a>
+            </p>
+        </div>
+    </div>
+</section>
+{% endblock %}

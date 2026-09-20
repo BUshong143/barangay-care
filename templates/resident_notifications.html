@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Notifications — Barangay Care{% endblock %}
+{% block body_class %}has-bottom-nav{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div class="container">
+        <h1><i class="fa-solid fa-bell"></i> Notifications</h1>
+        <p>Updates about your complaints and messages from staff.</p>
+    </div>
+</section>
+
+<section class="form-section">
+    <div class="container">
+        <a href="{{ url_for('resident_dashboard') }}" class="btn btn-outline" style="margin-bottom:1rem;">
+            <i class="fa-solid fa-arrow-left"></i> Back to dashboard
+        </a>
+
+        {% if notifications %}
+        <div class="card">
+            <ul style="list-style:none;padding:0;margin:0;">
+                {% for n in notifications %}
+                <li style="padding:0.85rem 0;border-bottom:1px solid var(--slate-100);">
+                    <div style="display:flex;justify-content:space-between;gap:0.75rem;align-items:flex-start;">
+                        <div>
+                            {% if not n.is_read %}<strong>{% endif %}
+                            {{ n.title }}
+                            {% if not n.is_read %}</strong>
+                            <span class="badge badge-urgent" style="font-size:0.7rem;">New</span>
+                            {% endif %}
+                            {% if n.body %}
+                            <div style="color:var(--slate-600);margin-top:0.25rem;font-size:0.9rem;">{{ n.body }}</div>
+                            {% endif %}
+                            <div style="color:var(--slate-400);font-size:0.8rem;margin-top:0.3rem;">{{ format_ph(n.created_at) }}</div>
+                        </div>
+                        {% if n.link %}
+                        <form method="POST" action="{{ url_for('resident_notification_read', nid=n.id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline">Open</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% else %}
+        <div class="card empty-card">
+            <p class="text-center"><i class="fa-solid fa-bell-slash"></i> No notifications yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

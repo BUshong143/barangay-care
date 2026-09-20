@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block body_class %}has-bottom-nav{% endblock %}
+{% block title %}Home — Barangay Care{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero-content">
+        <h1>Report. Track. Resolve.</h1>
+        <p class="hero-subtitle">
+            Submit barangay concerns with photos, follow progress in real time,
+            and message staff directly — keeping our community safe and well-maintained.
+        </p>
+        <div class="hero-actions">
+            <a href="{{ url_for('submit_complaint') }}" class="btn btn-primary btn-lg">
+                <i class="fa-solid fa-pen-to-square"></i> Submit a Complaint
+            </a>
+            <a href="{{ url_for('track') }}" class="btn btn-outline btn-lg">
+                <i class="fa-solid fa-magnifying-glass"></i> Track Status
+            </a>
+        </div>
+    </div>
+</section>
+
+<section class="stats-section">
+    <div class="container">
+        <h2 class="section-title">Live Community Dashboard</h2>
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+                <div class="stat-value" id="stat-total">{{ public_stats.total|default(0) }}</div>
+                <div class="stat-label">Total Reports</div>
+            </div>
+            <div class="stat-card stat-submitted">
+                <div class="stat-icon"><i class="fa-solid fa-inbox"></i></div>
+                <div class="stat-value" id="stat-submitted">{{ public_stats.submitted|default(0) }}</div>
+                <div class="stat-label">Submitted</div>
+            </div>
+            <div class="stat-card stat-progress">
+                <div class="stat-icon"><i class="fa-solid fa-spinner"></i></div>
+                <div class="stat-value" id="stat-in-progress">{{ public_stats.in_progress|default(0) }}</div>
+                <div class="stat-label">In Progress</div>
+            </div>
+            <div class="stat-card stat-resolved">
+                <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
+                <div class="stat-value" id="stat-resolved">{{ public_stats.resolved|default(0) }}</div>
+                <div class="stat-label">Resolved</div>
+            </div>
+            <div class="stat-card stat-confirmed">
+                <div class="stat-icon"><i class="fa-solid fa-thumbs-up"></i></div>
+                <div class="stat-value" id="stat-confirmed">{{ public_stats.confirmed|default(0) }}</div>
+                <div class="stat-label">Confirmed</div>
+            </div>
+            <div class="stat-card stat-urgent">
+                <div class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div class="stat-value" id="stat-urgent">{{ public_stats.urgent|default(0) }}</div>
+                <div class="stat-label">Urgent</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="how-it-works">
+    <div class="container">
+        <h2 class="section-title">How It Works</h2>
+        <div class="steps-grid">
+            <div class="step-card">
+                <div class="step-icon"><i class="fa-solid fa-camera"></i></div>
+                <h3>1. Submit</h3>
+                <p>Describe the issue, add a photo, and get a unique tracking number.</p>
+            </div>
+            <div class="step-card">
+                <div class="step-icon"><i class="fa-solid fa-clipboard-check"></i></div>
+                <h3>2. Verify</h3>
+                <p>Barangay staff review and verify the report for accuracy and urgency.</p>
+            </div>
+            <div class="step-card">
+                <div class="step-icon"><i class="fa-solid fa-user-gear"></i></div>
+                <h3>3. Assign &amp; Act</h3>
+                <p>Personnel are assigned. Status moves to In Progress then Resolved.</p>
+            </div>
+            <div class="step-card">
+                <div class="step-icon"><i class="fa-solid fa-comments"></i></div>
+                <h3>4. Communicate</h3>
+                <p>Message staff anytime. Confirm when the issue is fixed.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="recent-section">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">Recent Public Records</h2>
+        </div>
+        <div class="records-grid" id="recentBody">
+            <div class="loading-cell records-loading">
+                <div class="mini-spinner"></div> Loading records...
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

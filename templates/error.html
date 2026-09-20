@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Error {{ code }} — Barangay Care{% endblock %}
+
+{% block content %}
+<section class="success-section">
+    <div class="container">
+        <div class="card success-card">
+            <div class="success-icon error-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <h1>Error {{ code }}</h1>
+            <p class="success-msg">{{ message }}</p>
+            <a href="{{ url_for('index') }}" class="btn btn-primary">
+                <i class="fa-solid fa-house"></i> Back to Home
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
