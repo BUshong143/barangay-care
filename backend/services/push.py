@@ -93,13 +93,15 @@ def _init_firebase():
     global _firebase_app
     if _firebase_app is not None:
         return _firebase_app
-    if not FIREBASE_CREDENTIALS_JSON:
+    import os
+    creds = (os.getenv("FIREBASE_CREDENTIALS_JSON") or FIREBASE_CREDENTIALS_JSON or "").strip()
+    if not creds:
         return None
     try:
         import firebase_admin
         from firebase_admin import credentials
         if not firebase_admin._apps:
-            path = FIREBASE_CREDENTIALS_JSON
+            path = creds
             if path.startswith("{"):
                 import json
                 cred = credentials.Certificate(json.loads(path))

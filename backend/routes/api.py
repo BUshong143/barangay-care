@@ -1004,12 +1004,28 @@ def api_push_unsubscribe():
 
 @bp.route("/api/push/status", endpoint="api_push_status")
 def api_push_status():
-    """Whether Web Push / FCM is configured on the server."""
+    """Whether Web Push / FCM is configured (reads env at request time)."""
+    import os
+    vapid_pub = (os.getenv("VAPID_PUBLIC_KEY") or "").strip()
+    vapid_priv = (os.getenv("VAPID_PRIVATE_KEY") or "").strip()
+    fb = (os.getenv("FIREBASE_CREDENTIALS_JSON") or "").strip()
+    fcm_key = (os.getenv("FCM_SERVER_KEY") or "").strip()
+    base = (os.getenv("PUBLIC_BASE_URL") or "").rstrip("/")
     return jsonify({
-        "web_push_enabled": bool(VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY),
-        "fcm_enabled": bool(FIREBASE_CREDENTIALS_JSON or FCM_SERVER_KEY),
-        "enabled": bool(VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY),  # backward compatible
-        "public_base_url": PUBLIC_BASE_URL or None,
+        "web_push_enabled": bool(vapid_pub and vapid_priv),
+        "fcm_enabled": bool(fb or fcm_key),
+        "enabled": bool(vapid_pub and vapid_priv),
+        "public_base_url": base or None,
+        # diagnostics (no secrets): whether each var is present
+        "env_present": {
+            "PUBLIC_BASE_URL": bool(base),
+            "FIREBASE_CREDENTIALS_JSON": bool(fb),
+            "FCM_SERVER_KEY": bool(fcm_key),
+            "VAPID_PUBLIC_KEY": bool(vapid_pub),
+            "VAPID_PRIVATE_KEY": bool(vapid_priv),
+            "DATABASE_URL": bool((os.getenv("DATABASE_URL") or "").strip()),
+            "SECRET_KEY": bool((os.getenv("SECRET_KEY") or "").strip()),
+        },
     })
 
 

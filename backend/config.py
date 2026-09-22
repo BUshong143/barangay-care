@@ -92,5 +92,3 @@ PRIORITIES = Config.PRIORITIES
 CATEGORIES = Config.CATEGORIES
 PRIORITY_DUE_DAYS = Config.PRIORITY_DUE_DAYS
 ROLE_PERMISSIONS = Config.ROLE_PERMISSIONS
-
-_allow_default_admin = Config._allow_default_admin
