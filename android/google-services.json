@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1054570826557",
+    "project_id": "barangay-care-39dce",
+    "storage_bucket": "barangay-care-39dce.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1054570826557:android:e6c92aadb6dcbd26c49354",
+        "android_client_info": {
+          "package_name": "ph.barangay.care"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDXyQyJIrUbHkKFTuDpvOrr-72nIWhR9gs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
