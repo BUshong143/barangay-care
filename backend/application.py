@@ -39,7 +39,7 @@ def create_app():
     @app.errorhandler(413)
     def too_large(e):
         flash("File too large.", "error")
-        return redirect(request.referrer or url_for("index")), 413
+        return redirect(request.referrer or url_for("public.index")), 413
 
     @app.errorhandler(404)
     def not_found(e):
@@ -47,7 +47,10 @@ def create_app():
 
     @app.errorhandler(500)
     def server_error(e):
-        return render_template("error.html", code=500, message="Internal server error"), 500
+        try:
+            return render_template("error.html", code=500, message="Internal server error"), 500
+        except Exception:
+            return ("Internal Server Error", 500)
 
     with app.app_context():
         try:

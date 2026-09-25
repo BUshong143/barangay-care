@@ -25,7 +25,7 @@
                         </button>
                     </form>
                     {% else %}
-                    <p class="field-hint">The built-in admin account can't be renamed here. Create a personal staff account from <a href="{{ url_for('admin_staff') }}">Staff Accounts</a> instead.</p>
+                    <p class="field-hint">The built-in admin account can't be renamed here. Create a personal staff account from <a href="{{ url_for('admin.admin_staff') }}">Staff Accounts</a> instead.</p>
                     {% endif %}
                 </div>
 
@@ -106,7 +106,7 @@
                 <div class="card settings-card settings-logout-card">
                     <h3><i class="fa-solid fa-right-from-bracket"></i> Log Out</h3>
                     <p class="field-hint settings-card-intro">End your current staff session on this device.</p>
-                    <a href="{{ url_for('admin_logout') }}" class="btn btn-outline btn-danger btn-block">
+                    <a href="{{ url_for('admin.admin_logout') }}" class="btn btn-outline btn-danger btn-block">
                         <i class="fa-solid fa-right-from-bracket"></i> Logout
                     </a>
                 </div>

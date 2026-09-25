@@ -13,7 +13,7 @@
 <section class="form-section">
     <div class="container">
         <div class="card form-card track-search-card">
-            <form method="GET" action="{{ url_for('track') }}" id="trackForm" class="track-form">
+            <form method="GET" action="{{ url_for('public.track') }}" id="trackForm" class="track-form">
                 <div class="form-group">
                     <label for="tracking">Tracking Number</label>
                     <div class="input-with-btn">
@@ -97,24 +97,24 @@
                             {% if complaint.photo_path %}
                             <figure style="margin:0;">
                                 <figcaption style="font-size:0.75rem;color:var(--slate-500);margin-bottom:0.35rem;">Before</figcaption>
-                                <a href="{{ url_for('serve_upload', filename=complaint.photo_path.replace('uploads/', '')) }}" target="_blank" rel="noopener" class="photo-link">
-                                    <img src="{{ url_for('serve_upload', filename=complaint.photo_path.replace('uploads/', '')) }}" alt="Before" class="complaint-photo">
+                                <a href="{{ url_for('public.serve_upload', filename=complaint.photo_path.replace('uploads/', '')) }}" target="_blank" rel="noopener" class="photo-link">
+                                    <img src="{{ url_for('public.serve_upload', filename=complaint.photo_path.replace('uploads/', '')) }}" alt="Before" class="complaint-photo">
                                 </a>
                             </figure>
                             {% endif %}
                             {% if complaint.resolution_photo_path %}
                             <figure style="margin:0;">
                                 <figcaption style="font-size:0.75rem;color:var(--slate-500);margin-bottom:0.35rem;">Resolution</figcaption>
-                                <a href="{{ url_for('serve_upload', filename=complaint.resolution_photo_path.replace('uploads/', '')) }}" target="_blank" rel="noopener" class="photo-link">
-                                    <img src="{{ url_for('serve_upload', filename=complaint.resolution_photo_path.replace('uploads/', '')) }}" alt="Resolution" class="complaint-photo">
+                                <a href="{{ url_for('public.serve_upload', filename=complaint.resolution_photo_path.replace('uploads/', '')) }}" target="_blank" rel="noopener" class="photo-link">
+                                    <img src="{{ url_for('public.serve_upload', filename=complaint.resolution_photo_path.replace('uploads/', '')) }}" alt="Resolution" class="complaint-photo">
                                 </a>
                             </figure>
                             {% endif %}
                             {% if complaint.after_photo_path %}
                             <figure style="margin:0;">
                                 <figcaption style="font-size:0.75rem;color:var(--slate-500);margin-bottom:0.35rem;">After</figcaption>
-                                <a href="{{ url_for('serve_upload', filename=complaint.after_photo_path.replace('uploads/', '')) }}" target="_blank" rel="noopener" class="photo-link">
-                                    <img src="{{ url_for('serve_upload', filename=complaint.after_photo_path.replace('uploads/', '')) }}" alt="After" class="complaint-photo">
+                                <a href="{{ url_for('public.serve_upload', filename=complaint.after_photo_path.replace('uploads/', '')) }}" target="_blank" rel="noopener" class="photo-link">
+                                    <img src="{{ url_for('public.serve_upload', filename=complaint.after_photo_path.replace('uploads/', '')) }}" alt="After" class="complaint-photo">
                                 </a>
                             </figure>
                             {% endif %}
@@ -170,7 +170,7 @@
             {% if complaint.status == 'Resolved' %}
             <div class="confirm-box">
                 <p>Has this issue been fixed to your satisfaction?</p>
-                <form method="POST" action="{{ url_for('confirm_resolution', tracking_number=complaint.tracking_number) }}"
+                <form method="POST" action="{{ url_for('public.confirm_resolution', tracking_number=complaint.tracking_number) }}"
                       id="confirmForm">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="form-group" style="text-align:left;margin:0.75rem 0;">
@@ -242,7 +242,7 @@
                     <p class="messages-empty">No messages yet. Send a message to staff below.</p>
                 {% endif %}
             </div>
-            <form method="POST" action="{{ url_for('resident_send_message') }}" id="messageForm" class="message-form">
+            <form method="POST" action="{{ url_for('public.resident_send_message') }}" id="messageForm" class="message-form">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="tracking_number" value="{{ complaint.tracking_number }}">
                 <div class="form-group">

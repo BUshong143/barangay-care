@@ -45,14 +45,6 @@ def format_ph(dt, fmt="%b %d, %Y %I:%M %p"):
     return t.strftime(fmt)
 
 
-def get_db():
-    if not DATABASE_URL:
-        raise RuntimeError(
-            "DATABASE_URL is not set. Copy .env.example to .env and configure it."
-        )
-    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
-
-
 def init_db():
     conn = get_db()
     cur = conn.cursor()

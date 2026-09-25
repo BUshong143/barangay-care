@@ -33,26 +33,26 @@
         </div>
 
         <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1.25rem;align-items:center;">
-            <a href="{{ url_for('submit_complaint') }}" class="btn btn-primary">
+            <a href="{{ url_for('public.submit_complaint') }}" class="btn btn-primary">
                 <i class="fa-solid fa-pen-to-square"></i> Submit new
             </a>
-            <a href="{{ url_for('resident_notifications') }}" class="btn btn-outline">
+            <a href="{{ url_for('public.resident_notifications') }}" class="btn btn-outline">
                 <i class="fa-solid fa-bell"></i> Notifications
                 {% if unread_notifications %}<span class="badge badge-urgent">{{ unread_notifications }}</span>{% endif %}
             </a>
-            <a href="{{ url_for('resident_logout') }}" class="btn btn-outline">
+            <a href="{{ url_for('public.resident_logout') }}" class="btn btn-outline">
                 <i class="fa-solid fa-right-from-bracket"></i> Log out
             </a>
         </div>
 
         <!-- Status filters -->
         <div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:1rem;">
-            <a href="{{ url_for('resident_dashboard') }}"
+            <a href="{{ url_for('public.resident_dashboard') }}"
                class="badge {% if not current_status %}badge-status-verified{% else %}badge-status-submitted{% endif %}">
                 All
             </a>
             {% for s in statuses %}
-            <a href="{{ url_for('resident_dashboard', status=s) }}"
+            <a href="{{ url_for('public.resident_dashboard', status=s) }}"
                class="badge badge-status-{{ s|lower|replace(' ', '-') }} {% if current_status == s %}badge-status-verified{% endif %}">
                 {{ s }}
             </a>
@@ -72,14 +72,14 @@
                 </li>
                 {% endfor %}
             </ul>
-            <a href="{{ url_for('resident_notifications') }}" style="font-size:0.85rem;">View all</a>
+            <a href="{{ url_for('public.resident_notifications') }}" style="font-size:0.85rem;">View all</a>
         </div>
         {% endif %}
 
         {% if complaints %}
         <div class="records-grid">
             {% for c in complaints %}
-            <a class="record-card" href="{{ url_for('track', tracking=c.tracking_number) }}" style="text-decoration:none;color:inherit;">
+            <a class="record-card" href="{{ url_for('public.track', tracking=c.tracking_number) }}" style="text-decoration:none;color:inherit;">
                 <div class="record-card-top">
                     <div class="record-icon"><i class="fa-solid fa-clipboard-list"></i></div>
                     <span class="badge badge-status-{{ (c.status or '')|lower|replace(' ', '-') }}">{{ c.status }}</span>
@@ -105,7 +105,7 @@
                 No complaints with status {{ current_status }}.
                 {% else %}
                 You have no complaints yet.
-                <a href="{{ url_for('submit_complaint') }}">Submit one</a>.
+                <a href="{{ url_for('public.submit_complaint') }}">Submit one</a>.
                 {% endif %}
             </p>
         </div>

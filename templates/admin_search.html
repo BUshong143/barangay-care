@@ -5,7 +5,7 @@
 <section class="admin-section">
     <div class="container">
         <div class="card filter-card">
-            <form method="GET" action="{{ url_for('admin_dashboard') }}" class="filter-form" id="filterForm">
+            <form method="GET" action="{{ url_for('admin.admin_dashboard') }}" class="filter-form" id="filterForm">
                 <div class="filter-row">
                     <div class="form-group">
                         <label for="q">Search</label>
@@ -36,7 +36,7 @@
                             <span class="btn-text"><i class="fa-solid fa-filter"></i> Filter</span>
                             <span class="btn-loader hidden"><span class="mini-spinner white"></span></span>
                         </button>
-                        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline">Reset</a>
+                        <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline">Reset</a>
                     </div>
                 </div>
             </form>

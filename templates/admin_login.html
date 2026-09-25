@@ -10,7 +10,7 @@
                 <h1>Staff Login</h1>
                 <p>Authorized staff only</p>
             </div>
-            <form method="POST" action="{{ url_for('admin_login') }}" id="loginForm">
+            <form method="POST" action="{{ url_for('admin.admin_login') }}" id="loginForm">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="form-group">
                     <label for="username">Username</label>

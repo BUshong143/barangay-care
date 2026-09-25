@@ -47,7 +47,7 @@ bp = Blueprint("admin", __name__)
 @bp.route("/admin/login", methods=["GET", "POST"], endpoint="admin_login")
 def admin_login():
     if session.get("admin_logged_in"):
-        return redirect(url_for("admin_dashboard"))
+        return redirect(url_for("admin.admin_dashboard"))
 
     if request.method == "POST":
         ip = request.headers.get("X-Forwarded-For", request.remote_addr) or "unknown"
@@ -78,7 +78,7 @@ def admin_login():
             cur.close()
             conn.close()
         except Exception as e:
-            app.logger.error(e)
+            current_app.logger.error(e)
 
         authenticated = False
         role = "admin"
@@ -137,11 +137,11 @@ def admin_login():
                         actor_type="staff", actor_id=None, actor_name=full_name
                     )
             except Exception as e:
-                app.logger.error(e)
+                current_app.logger.error(e)
             flash(f"Welcome, {full_name}" + (f" ({staff_code})" if staff_code else "") + ".", "success")
-            next_url = request.args.get("next") or url_for("admin_dashboard")
+            next_url = request.args.get("next") or url_for("admin.admin_dashboard")
             if not next_url.startswith("/"):
-                next_url = url_for("admin_dashboard")
+                next_url = url_for("admin.admin_dashboard")
             return redirect(next_url)
         flash("Invalid username or password.", "error")
 
@@ -156,7 +156,7 @@ def admin_logout():
         pass
     session.clear()
     flash("You have been logged out.", "success")
-    return redirect(url_for("index"))
+    return redirect(url_for("public.index"))
 
 
 # ─── Admin routes ──────────────────────────────────────────────────────────
@@ -186,7 +186,7 @@ def _get_status_stats():
         conn.close()
     except Exception as e:
         flash("Database error.", "error")
-        app.logger.error(e)
+        current_app.logger.error(e)
     return stats
 
 
@@ -291,7 +291,7 @@ def _get_dashboard_extras():
         conn.close()
     except Exception as e:
         flash("Database error.", "error")
-        app.logger.error(e)
+        current_app.logger.error(e)
     return needs_attention, category_counts, unread_total, overdue_count, overdue_cases
 
 
@@ -353,7 +353,7 @@ def admin_stats_dashboard():
         cur.close()
         conn.close()
     except Exception as e:
-        app.logger.error(e)
+        current_app.logger.error(e)
         feedback_n = 0
 
     return render_template(
@@ -466,7 +466,7 @@ def admin_dashboard():
         conn.close()
     except Exception as e:
         flash("Database error.", "error")
-        app.logger.error(e)
+        current_app.logger.error(e)
         complaints, stats, unread_map = [], {}, {}
 
     return render_template(
@@ -495,7 +495,7 @@ def admin_complaint(complaint_id):
         token = request.form.get("csrf_token", "")
         if not validate_csrf_token(token):
             flash("Invalid security token.", "error")
-            return redirect(url_for("admin_complaint", complaint_id=complaint_id))
+            return redirect(url_for("admin.admin_complaint", complaint_id=complaint_id))
 
         action = sanitize_text(request.form.get("action", ""), 30)
         status = sanitize_text(request.form.get("status", ""), 30)
@@ -514,7 +514,7 @@ def admin_complaint(complaint_id):
                 cur.close()
                 conn.close()
                 flash("Complaint not found.", "error")
-                return redirect(url_for("admin_dashboard"))
+                return redirect(url_for("admin.admin_dashboard"))
             # Permission: responders may only act on assigned cases
             if not staff_can_access_complaint({"assigned_personnel": before.get("assigned_personnel"),
                                               "assigned_staff_id": None}) and (session.get("staff_role") or "admin") != "admin":
@@ -525,7 +525,7 @@ def admin_complaint(complaint_id):
                     cur.close()
                     conn.close()
                     flash("You can only update cases assigned to you.", "error")
-                    return redirect(url_for("admin_dashboard"))
+                    return redirect(url_for("admin.admin_dashboard"))
 
             old_status = before.get("status")
             old_assigned = before.get("assigned_personnel")
@@ -558,7 +558,7 @@ def admin_complaint(complaint_id):
                 assigned_staff_id, assigned = resolve_staff_assignment(staff_id_raw, assigned)
                 if not assigned_staff_id and not assigned:
                     flash("Please select a staff member.", "error")
-                    return redirect(url_for("admin_complaint", complaint_id=complaint_id))
+                    return redirect(url_for("admin.admin_complaint", complaint_id=complaint_id))
                 cur.execute("SELECT priority, due_at FROM complaints WHERE id = %s", (complaint_id,))
                 prow = cur.fetchone() or {}
                 due = prow.get("due_at") or compute_due_at(prow.get("priority") or "Normal")
@@ -597,13 +597,13 @@ def admin_complaint(complaint_id):
             elif action == "reassign":
                 if old_status not in ("Assigned", "In Progress", "Verified"):
                     flash("Only active cases can be reassigned.", "error")
-                    return redirect(url_for("admin_complaint", complaint_id=complaint_id))
+                    return redirect(url_for("admin.admin_complaint", complaint_id=complaint_id))
                 staff_id_raw = request.form.get("assigned_staff_id", "")
                 reason = sanitize_text(request.form.get("reassign_reason", ""), 300)
                 assigned_staff_id, assigned = resolve_staff_assignment(staff_id_raw, assigned)
                 if not assigned_staff_id and not assigned:
                     flash("Please select a staff member to reassign.", "error")
-                    return redirect(url_for("admin_complaint", complaint_id=complaint_id))
+                    return redirect(url_for("admin.admin_complaint", complaint_id=complaint_id))
                 new_priority = sanitize_text(request.form.get("priority", ""), 20)
                 due_sql = ""
                 params = [assigned, assigned_staff_id]
@@ -704,7 +704,7 @@ def admin_complaint(complaint_id):
                 remarks = sanitize_text(request.form.get("resolution_remarks", ""), 3000)
                 if not remarks:
                     flash("Resolution remarks are required.", "error")
-                    return redirect(url_for("admin_complaint", complaint_id=complaint_id))
+                    return redirect(url_for("admin.admin_complaint", complaint_id=complaint_id))
                 resolution_photo = None
                 after_photo = None
                 try:
@@ -718,7 +718,7 @@ def admin_complaint(complaint_id):
                             after_photo = process_and_save_image(f)
                 except ValueError as e:
                     flash(str(e), "error")
-                    return redirect(url_for("admin_complaint", complaint_id=complaint_id))
+                    return redirect(url_for("admin.admin_complaint", complaint_id=complaint_id))
                 cur.execute(
                     """UPDATE complaints SET status='Resolved',
                        resolution_remarks=%s,
@@ -824,8 +824,8 @@ def admin_complaint(complaint_id):
             flash("Updated successfully.", "success")
         except Exception as e:
             flash("Update failed.", "error")
-            app.logger.error(e)
-        return redirect(url_for("admin_complaint", complaint_id=complaint_id))
+            current_app.logger.error(e)
+        return redirect(url_for("admin.admin_complaint", complaint_id=complaint_id))
 
     # GET
     history = []
@@ -837,12 +837,12 @@ def admin_complaint(complaint_id):
         complaint = cur.fetchone()
         if not complaint:
             flash("Complaint not found.", "error")
-            return redirect(url_for("admin_dashboard"))
+            return redirect(url_for("admin.admin_dashboard"))
         if not staff_can_access_complaint(complaint):
             cur.close()
             conn.close()
             flash("You can only view cases assigned to you.", "error")
-            return redirect(url_for("admin_dashboard"))
+            return redirect(url_for("admin.admin_dashboard"))
         cur.execute(
             "SELECT * FROM messages WHERE complaint_id = %s ORDER BY created_at ASC",
             (complaint_id,)
@@ -874,8 +874,8 @@ def admin_complaint(complaint_id):
         conn.close()
     except Exception as e:
         flash("Error loading complaint.", "error")
-        app.logger.error(e)
-        return redirect(url_for("admin_dashboard"))
+        current_app.logger.error(e)
+        return redirect(url_for("admin.admin_dashboard"))
 
     return render_template(
         "admin_complaint.html",
@@ -899,7 +899,7 @@ def admin_staff():
         token = request.form.get("csrf_token", "")
         if not validate_csrf_token(token):
             flash("Invalid security token.", "error")
-            return redirect(url_for("admin_staff"))
+            return redirect(url_for("admin.admin_staff"))
 
         action = sanitize_text(request.form.get("action", ""), 30)
 
@@ -970,9 +970,9 @@ def admin_staff():
             conn.close()
         except Exception as e:
             flash("Could not update staff accounts.", "error")
-            app.logger.error(e)
+            current_app.logger.error(e)
 
-        return redirect(url_for("admin_staff"))
+        return redirect(url_for("admin.admin_staff"))
 
     users = []
     try:
@@ -990,7 +990,7 @@ def admin_staff():
         conn.close()
     except Exception as e:
         flash("Could not load staff list.", "error")
-        app.logger.error(e)
+        current_app.logger.error(e)
 
     return render_template("admin_staff.html", users=users)
 
@@ -1005,11 +1005,11 @@ def admin_settings():
         token = request.form.get("csrf_token", "")
         if not validate_csrf_token(token):
             flash("Invalid security token.", "error")
-            return redirect(url_for("admin_settings"))
+            return redirect(url_for("admin.admin_settings"))
 
         if not staff_id:
             flash("The built-in admin account can't be edited here. Create a personal staff account instead.", "error")
-            return redirect(url_for("admin_settings"))
+            return redirect(url_for("admin.admin_settings"))
 
         action = sanitize_text(request.form.get("action", ""), 30)
 
@@ -1056,9 +1056,9 @@ def admin_settings():
             conn.close()
         except Exception as e:
             flash("Could not update settings.", "error")
-            app.logger.error(e)
+            current_app.logger.error(e)
 
-        return redirect(url_for("admin_settings"))
+        return redirect(url_for("admin.admin_settings"))
 
     # GET
     account = None
@@ -1078,7 +1078,7 @@ def admin_settings():
             conn.close()
         except Exception as e:
             flash("Could not load account details.", "error")
-            app.logger.error(e)
+            current_app.logger.error(e)
 
     return render_template("admin_settings.html", account=account)
 

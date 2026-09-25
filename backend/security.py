@@ -15,11 +15,15 @@ import bleach
 
 from backend.config import (
     SECRET_KEY, UPLOAD_FOLDER, ALLOWED_EXTENSIONS, ALLOWED_MIME,
-    ROLE_PERMISSIONS,
+    ROLE_PERMISSIONS, PRIORITY_DUE_DAYS,
+)
+from backend.helpers import (
+    format_ph, now_ph, role_has_permission, is_overdue,
+    get_active_categories, unread_notification_count,
 )
 
 csrf_serializer = URLSafeTimedSerializer(SECRET_KEY)
-_rate_limits = {}
+_rate_limit_store = {}
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -108,7 +112,7 @@ def process_and_save_image(file_storage):
 def admin_only_redirect():
     """If staff is logged in, send them to admin dashboard instead of resident pages."""
     if session.get("admin_logged_in"):
-        return redirect(url_for("admin_dashboard"))
+        return redirect(url_for("admin.admin_dashboard"))
     return None
 
 
@@ -119,10 +123,10 @@ def permission_required(permission):
         def decorated(*args, **kwargs):
             if not session.get("admin_logged_in"):
                 flash("Please log in.", "error")
-                return redirect(url_for("admin_login", next=request.path))
+                return redirect(url_for("admin.admin_login", next=request.path))
             if not role_has_permission(permission):
                 flash("You do not have permission for that action.", "error")
-                return redirect(url_for("admin_dashboard"))
+                return redirect(url_for("admin.admin_dashboard"))
             return f(*args, **kwargs)
         return decorated
     return decorator
@@ -134,11 +138,11 @@ def admin_role_required(f):
     def decorated(*args, **kwargs):
         if not session.get("admin_logged_in"):
             flash("Please log in.", "error")
-            return redirect(url_for("admin_login", next=request.path))
+            return redirect(url_for("admin.admin_login", next=request.path))
         role = session.get("staff_role") or "admin"
         if role != "admin":
             flash("Only administrators can access that page.", "error")
-            return redirect(url_for("admin_dashboard"))
+            return redirect(url_for("admin.admin_dashboard"))
         return f(*args, **kwargs)
     return decorated
 
@@ -148,7 +152,7 @@ def login_required(f):
     def decorated(*args, **kwargs):
         if not session.get("admin_logged_in"):
             flash("Please log in to access the admin panel.", "error")
-            return redirect(url_for("admin_login", next=request.path))
+            return redirect(url_for("admin.admin_login", next=request.path))
         return f(*args, **kwargs)
     return decorated
 
@@ -158,7 +162,7 @@ def resident_login_required(f):
     def decorated(*args, **kwargs):
         if not session.get("resident_logged_in"):
             flash("Please log in to continue.", "error")
-            return redirect(url_for("resident_login", next=request.path))
+            return redirect(url_for("public.resident_login", next=request.path))
         return f(*args, **kwargs)
     return decorated
 
@@ -204,5 +208,3 @@ def set_security_headers(response):
         "frame-ancestors 'self';"
     )
     return response
-
-

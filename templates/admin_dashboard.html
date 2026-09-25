@@ -49,10 +49,10 @@
             </div>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;">
-            <a href="{{ url_for('admin_map') }}" class="btn btn-sm btn-outline"><i class="fa-solid fa-map"></i> Map</a>
-            <a href="{{ url_for('admin_reports') }}" class="btn btn-sm btn-outline"><i class="fa-solid fa-chart-line"></i> Reports</a>
-            <a href="{{ url_for('admin_export_csv') }}" class="btn btn-sm btn-outline"><i class="fa-solid fa-file-csv"></i> CSV</a>
-            <a href="{{ url_for('admin_export_xlsx') }}" class="btn btn-sm btn-outline"><i class="fa-solid fa-file-excel"></i> Excel</a>
+            <a href="{{ url_for('api.admin_map') }}" class="btn btn-sm btn-outline"><i class="fa-solid fa-map"></i> Map</a>
+            <a href="{{ url_for('api.admin_reports') }}" class="btn btn-sm btn-outline"><i class="fa-solid fa-chart-line"></i> Reports</a>
+            <a href="{{ url_for('api.admin_export_csv') }}" class="btn btn-sm btn-outline"><i class="fa-solid fa-file-csv"></i> CSV</a>
+            <a href="{{ url_for('api.admin_export_xlsx') }}" class="btn btn-sm btn-outline"><i class="fa-solid fa-file-excel"></i> Excel</a>
         </div>
         <div class="dash-grid dash-charts">
             <!-- Status chart -->
@@ -65,7 +65,7 @@
                 </div>
                 <div class="stats-summary" id="statusSummary">
                     {% for s in statuses %}
-                    <a href="{{ url_for('admin_dashboard', status=s) }}" class="badge badge-status-{{ s|lower|replace(' ', '-') }}">
+                    <a href="{{ url_for('admin.admin_dashboard', status=s) }}" class="badge badge-status-{{ s|lower|replace(' ', '-') }}">
                         {{ s }}: {{ stats.get(s, 0) }}
                     </a>
                     {% endfor %}
@@ -124,7 +124,7 @@
                 <ul class="attention-list">
                     {% for c in needs_attention %}
                     <li>
-                        <a href="{{ url_for('admin_complaint', complaint_id=c.id) }}" class="attention-item">
+                        <a href="{{ url_for('admin.admin_complaint', complaint_id=c.id) }}" class="attention-item">
                             <span class="attention-main">
                                 <span class="attention-tracking">{{ c.tracking_number }}</span>
                                 <span class="attention-cat">{{ c.category }} · {{ c.location }}</span>
@@ -155,7 +155,7 @@
                 <ul class="dash-list">
                     {% for c in overdue_cases %}
                     <li>
-                        <a href="{{ url_for('admin_complaint', complaint_id=c.id) }}">
+                        <a href="{{ url_for('admin.admin_complaint', complaint_id=c.id) }}">
                             <strong>{{ c.tracking_number }}</strong>
                             <span>{{ c.category }} · {{ c.status }}</span>
                             <span class="badge badge-urgent">Due {{ format_ph(c.due_at, '%b %d') }}</span>

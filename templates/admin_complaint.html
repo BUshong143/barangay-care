@@ -116,8 +116,8 @@
                             {% if complaint.photo_path %}
                             <figure style="margin:0;">
                                 <figcaption style="font-size:0.75rem;color:var(--slate-500);margin-bottom:0.35rem;">Before</figcaption>
-                                <a href="{{ url_for('serve_upload', filename=complaint.photo_path.replace('uploads/', '')) }}" target="_blank" rel="noopener">
-                                    <img src="{{ url_for('serve_upload', filename=complaint.photo_path.replace('uploads/', '')) }}"
+                                <a href="{{ url_for('public.serve_upload', filename=complaint.photo_path.replace('uploads/', '')) }}" target="_blank" rel="noopener">
+                                    <img src="{{ url_for('public.serve_upload', filename=complaint.photo_path.replace('uploads/', '')) }}"
                                          alt="Before photo" class="complaint-photo">
                                 </a>
                             </figure>
@@ -125,8 +125,8 @@
                             {% if complaint.resolution_photo_path %}
                             <figure style="margin:0;">
                                 <figcaption style="font-size:0.75rem;color:var(--slate-500);margin-bottom:0.35rem;">Resolution</figcaption>
-                                <a href="{{ url_for('serve_upload', filename=complaint.resolution_photo_path.replace('uploads/', '')) }}" target="_blank" rel="noopener">
-                                    <img src="{{ url_for('serve_upload', filename=complaint.resolution_photo_path.replace('uploads/', '')) }}"
+                                <a href="{{ url_for('public.serve_upload', filename=complaint.resolution_photo_path.replace('uploads/', '')) }}" target="_blank" rel="noopener">
+                                    <img src="{{ url_for('public.serve_upload', filename=complaint.resolution_photo_path.replace('uploads/', '')) }}"
                                          alt="Resolution photo" class="complaint-photo">
                                 </a>
                             </figure>
@@ -134,8 +134,8 @@
                             {% if complaint.after_photo_path %}
                             <figure style="margin:0;">
                                 <figcaption style="font-size:0.75rem;color:var(--slate-500);margin-bottom:0.35rem;">After</figcaption>
-                                <a href="{{ url_for('serve_upload', filename=complaint.after_photo_path.replace('uploads/', '')) }}" target="_blank" rel="noopener">
-                                    <img src="{{ url_for('serve_upload', filename=complaint.after_photo_path.replace('uploads/', '')) }}"
+                                <a href="{{ url_for('public.serve_upload', filename=complaint.after_photo_path.replace('uploads/', '')) }}" target="_blank" rel="noopener">
+                                    <img src="{{ url_for('public.serve_upload', filename=complaint.after_photo_path.replace('uploads/', '')) }}"
                                          alt="After photo" class="complaint-photo">
                                 </a>
                             </figure>

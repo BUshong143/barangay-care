@@ -13,7 +13,17 @@ def get_db():
         raise RuntimeError(
             "DATABASE_URL is not set. Copy .env.example to .env and configure it."
         )
-    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+    # Strip channel_binding if present — some psycopg2/ssl builds do not support it
+    dsn = DATABASE_URL.replace("&channel_binding=require", "").replace("?channel_binding=require&", "?").replace("?channel_binding=require", "")
+    return psycopg2.connect(
+        dsn,
+        cursor_factory=RealDictCursor,
+        connect_timeout=15,
+        keepalives=1,
+        keepalives_idle=30,
+        keepalives_interval=10,
+        keepalives_count=3,
+    )
 
 
 def init_db():

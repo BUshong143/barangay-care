@@ -86,7 +86,7 @@ def api_complaints():
             result.append(item)
         return jsonify({"success": True, "data": result})
     except Exception as e:
-        app.logger.error(e)
+        current_app.logger.error(e)
         return jsonify({"success": False, "error": "Server error"}), 500
 
 
@@ -114,7 +114,7 @@ def api_stats():
         conn.close()
         return jsonify({"success": True, "data": stats})
     except Exception as e:
-        app.logger.error(e)
+        current_app.logger.error(e)
         return jsonify({"success": False, "error": "Server error"}), 500
 
 
@@ -152,7 +152,7 @@ def api_admin_activity():
             data.append(item)
         return jsonify({"success": True, "data": data})
     except Exception as e:
-        app.logger.error(e)
+        current_app.logger.error(e)
         return jsonify({"success": False, "error": "Server error"}), 500
 
 
@@ -190,7 +190,7 @@ def admin_map():
         cur.close()
         conn.close()
     except Exception as e:
-        app.logger.error(e)
+        current_app.logger.error(e)
         flash("Could not load map data.", "error")
     return render_template(
         "admin_map.html",
@@ -284,9 +284,9 @@ def admin_export_csv():
     try:
         rows = _filtered_complaints_for_export()
     except Exception as e:
-        app.logger.error(e)
+        current_app.logger.error(e)
         flash("Export failed.", "error")
-        return redirect(url_for("admin_dashboard"))
+        return redirect(url_for("admin.admin_dashboard"))
 
     buf = io.StringIO()
     writer = csv.writer(buf)
@@ -318,13 +318,13 @@ def admin_export_xlsx():
         from openpyxl.styles import Font
     except ImportError:
         flash("Excel export requires openpyxl. Install: pip install openpyxl", "error")
-        return redirect(url_for("admin_reports"))
+        return redirect(url_for("api.admin_reports"))
     try:
         rows = _filtered_complaints_for_export()
     except Exception as e:
-        app.logger.error(e)
+        current_app.logger.error(e)
         flash("Export failed.", "error")
-        return redirect(url_for("admin_reports"))
+        return redirect(url_for("api.admin_reports"))
 
     wb = Workbook()
     ws = wb.active
@@ -447,7 +447,7 @@ def admin_reports():
         cur.close()
         conn.close()
     except Exception as e:
-        app.logger.error(e)
+        current_app.logger.error(e)
         years = [now_ph().year]
 
     return render_template(
@@ -476,7 +476,7 @@ def admin_reports_pdf():
         from reportlab.lib import colors
     except ImportError:
         flash("PDF export requires reportlab. Install: pip install reportlab", "error")
-        return redirect(url_for("admin_reports"))
+        return redirect(url_for("api.admin_reports"))
 
     year = sanitize_text(request.args.get("year", str(now_ph().year)), 10)
     month = sanitize_text(request.args.get("month", ""), 10)
@@ -516,9 +516,9 @@ def admin_reports_pdf():
         cur.close()
         conn.close()
     except Exception as e:
-        app.logger.error(e)
+        current_app.logger.error(e)
         flash("Could not build PDF.", "error")
-        return redirect(url_for("admin_reports"))
+        return redirect(url_for("api.admin_reports"))
 
     import io
     buf = io.BytesIO()
@@ -569,7 +569,7 @@ def admin_categories():
         token = request.form.get("csrf_token", "")
         if not validate_csrf_token(token):
             flash("Invalid security token.", "error")
-            return redirect(url_for("admin_categories"))
+            return redirect(url_for("api.admin_categories"))
         action = sanitize_text(request.form.get("action", ""), 30)
         try:
             conn = get_db()
@@ -621,9 +621,9 @@ def admin_categories():
             cur.close()
             conn.close()
         except Exception as e:
-            app.logger.error(e)
+            current_app.logger.error(e)
             flash("Could not update categories.", "error")
-        return redirect(url_for("admin_categories"))
+        return redirect(url_for("api.admin_categories"))
 
     cats = []
     try:
@@ -642,7 +642,7 @@ def admin_categories():
         cur.close()
         conn.close()
     except Exception as e:
-        app.logger.error(e)
+        current_app.logger.error(e)
     return render_template("admin_categories.html", categories=cats)
 
 
@@ -688,9 +688,9 @@ def admin_backup():
             },
         )
     except Exception as e:
-        app.logger.error(e)
+        current_app.logger.error(e)
         flash("Backup failed.", "error")
-        return redirect(url_for("admin_settings"))
+        return redirect(url_for("admin.admin_settings"))
 
 
 @bp.route("/admin/restore", methods=["GET", "POST"], endpoint="admin_restore")
@@ -703,12 +703,12 @@ def admin_restore():
     token = request.form.get("csrf_token", "")
     if not validate_csrf_token(token):
         flash("Invalid security token.", "error")
-        return redirect(url_for("admin_restore"))
+        return redirect(url_for("api.admin_restore"))
 
     f = request.files.get("backup_file")
     if not f or not f.filename:
         flash("Please choose a backup JSON file.", "error")
-        return redirect(url_for("admin_restore"))
+        return redirect(url_for("api.admin_restore"))
 
     import json
     try:
@@ -875,9 +875,9 @@ def admin_restore():
             "success",
         )
     except Exception as e:
-        app.logger.error(e)
+        current_app.logger.error(e)
         flash(f"Restore failed: {e}", "error")
-    return redirect(url_for("admin_restore"))
+    return redirect(url_for("api.admin_restore"))
 
 
 
@@ -914,7 +914,7 @@ def admin_activity():
         cur.close()
         conn.close()
     except Exception as e:
-        app.logger.error(e)
+        current_app.logger.error(e)
         flash("Could not load activity logs.", "error")
     return render_template(
         "admin_activity.html",
@@ -975,7 +975,7 @@ def api_push_subscribe():
         conn.close()
         return jsonify({"ok": True})
     except Exception as e:
-        app.logger.error(e)
+        current_app.logger.error(e)
         return jsonify({"error": "Could not save subscription"}), 500
 
 
@@ -998,7 +998,7 @@ def api_push_unsubscribe():
         conn.close()
         return jsonify({"ok": True})
     except Exception as e:
-        app.logger.error(e)
+        current_app.logger.error(e)
         return jsonify({"error": "Could not unsubscribe"}), 500
 
 
@@ -1073,7 +1073,7 @@ def api_fcm_register():
         conn.close()
         return jsonify({"ok": True})
     except Exception as e:
-        app.logger.error(e)
+        current_app.logger.error(e)
         return jsonify({"error": "Could not register token"}), 500
 
 
@@ -1092,7 +1092,7 @@ def api_fcm_unregister():
         conn.close()
         return jsonify({"ok": True})
     except Exception as e:
-        app.logger.error(e)
+        current_app.logger.error(e)
         return jsonify({"error": "Could not unregister"}), 500
 
 
@@ -1127,7 +1127,7 @@ def api_fcm_register_staff():
         conn.close()
         return jsonify({"ok": True})
     except Exception as e:
-        app.logger.error(e)
+        current_app.logger.error(e)
         return jsonify({"error": "Could not register staff token"}), 500
 
 

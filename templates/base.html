@@ -56,39 +56,39 @@
             </div>
 
             <nav class="side-nav-menu">
-                <a href="{{ url_for('admin_stats_dashboard') }}" class="side-link {% if request.endpoint == 'admin_stats_dashboard' %}active{% endif %}" title="Dashboard">
+                <a href="{{ url_for('admin.admin_stats_dashboard') }}" class="side-link {% if request.endpoint == 'admin_stats_dashboard' %}active{% endif %}" title="Dashboard">
                     <i class="fa-solid fa-gauge-high"></i><span>Dashboard</span>
                 </a>
-                <a href="{{ url_for('admin_dashboard') }}" class="side-link {% if request.endpoint in ['admin_dashboard', 'admin_complaint'] %}active{% endif %}" title="Cases">
+                <a href="{{ url_for('admin.admin_dashboard') }}" class="side-link {% if request.endpoint in ['admin_dashboard', 'admin_complaint'] %}active{% endif %}" title="Cases">
                     <i class="fa-solid fa-clipboard-list"></i><span>Cases</span>
                 </a>
                 {% if (staff_role or 'admin') == 'admin' %}
-                <a href="{{ url_for('admin_staff') }}" class="side-link {% if request.endpoint == 'admin_staff' %}active{% endif %}" title="Staff">
+                <a href="{{ url_for('admin.admin_staff') }}" class="side-link {% if request.endpoint == 'admin_staff' %}active{% endif %}" title="Staff">
                     <i class="fa-solid fa-users"></i><span>Staff</span>
                 </a>
-                <a href="{{ url_for('admin_categories') }}" class="side-link {% if request.endpoint == 'admin_categories' %}active{% endif %}" title="Categories">
+                <a href="{{ url_for('api.admin_categories') }}" class="side-link {% if request.endpoint == 'admin_categories' %}active{% endif %}" title="Categories">
                     <i class="fa-solid fa-tags"></i><span>Categories</span>
                 </a>
-                <a href="{{ url_for('admin_activity') }}" class="side-link {% if request.endpoint == 'admin_activity' %}active{% endif %}" title="Activity">
+                <a href="{{ url_for('api.admin_activity') }}" class="side-link {% if request.endpoint == 'admin_activity' %}active{% endif %}" title="Activity">
                     <i class="fa-solid fa-clock-rotate-left"></i><span>Activity</span>
                 </a>
-                <a href="{{ url_for('admin_restore') }}" class="side-link {% if request.endpoint in ['admin_restore', 'admin_backup'] %}active{% endif %}" title="Backup">
+                <a href="{{ url_for('api.admin_restore') }}" class="side-link {% if request.endpoint in ['admin_restore', 'admin_backup'] %}active{% endif %}" title="Backup">
                     <i class="fa-solid fa-database"></i><span>Backup</span>
                 </a>
                 {% endif %}
-                <a href="{{ url_for('admin_map') }}" class="side-link {% if request.endpoint == 'admin_map' %}active{% endif %}" title="Map">
+                <a href="{{ url_for('api.admin_map') }}" class="side-link {% if request.endpoint == 'admin_map' %}active{% endif %}" title="Map">
                     <i class="fa-solid fa-map-location-dot"></i><span>Map</span>
                 </a>
-                <a href="{{ url_for('admin_reports') }}" class="side-link {% if request.endpoint == 'admin_reports' %}active{% endif %}" title="Reports">
+                <a href="{{ url_for('api.admin_reports') }}" class="side-link {% if request.endpoint == 'admin_reports' %}active{% endif %}" title="Reports">
                     <i class="fa-solid fa-chart-line"></i><span>Reports</span>
                 </a>
-                <a href="{{ url_for('admin_settings') }}" class="side-link {% if request.endpoint == 'admin_settings' %}active{% endif %}" title="Settings">
+                <a href="{{ url_for('admin.admin_settings') }}" class="side-link {% if request.endpoint == 'admin_settings' %}active{% endif %}" title="Settings">
                     <i class="fa-solid fa-gear"></i><span>Settings</span>
                 </a>
             </nav>
 
             <div class="side-nav-footer">
-                <a href="{{ url_for('admin_logout') }}" class="side-link side-logout" title="Logout">
+                <a href="{{ url_for('admin.admin_logout') }}" class="side-link side-logout" title="Logout">
                     <i class="fa-solid fa-right-from-bracket"></i><span>Logout</span>
                 </a>
             </div>
@@ -98,7 +98,7 @@
         <div class="app-main">
             {% if admin_logged_in %}
             <header class="admin-toolbar">
-                <form class="admin-search-form" method="GET" action="{{ url_for('admin_dashboard') }}" role="search">
+                <form class="admin-search-form" method="GET" action="{{ url_for('admin.admin_dashboard') }}" role="search">
                     <i class="fa-solid fa-magnifying-glass admin-search-icon" aria-hidden="true"></i>
                     <input type="search" name="q" class="admin-search-input"
                            placeholder="Search cases..." maxlength="100"
@@ -139,31 +139,31 @@
     <!-- Mobile bottom nav only -->
     <nav class="bottom-nav" id="bottomNav" aria-label="Main navigation">
         {% if admin_logged_in %}
-        <a href="{{ url_for('admin_stats_dashboard') }}" class="bn-item {% if request.endpoint == 'admin_stats_dashboard' %}active{% endif %}">
+        <a href="{{ url_for('admin.admin_stats_dashboard') }}" class="bn-item {% if request.endpoint == 'admin_stats_dashboard' %}active{% endif %}">
             <i class="fa-solid fa-gauge-high"></i><span>Dashboard</span>
         </a>
-        <a href="{{ url_for('admin_dashboard') }}" class="bn-item {% if request.endpoint in ['admin_dashboard', 'admin_complaint'] %}active{% endif %}">
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="bn-item {% if request.endpoint in ['admin_dashboard', 'admin_complaint'] %}active{% endif %}">
             <i class="fa-solid fa-clipboard-list"></i><span>Cases</span>
         </a>
         {% if (staff_role or 'admin') == 'admin' %}
-        <a href="{{ url_for('admin_staff') }}" class="bn-item {% if request.endpoint == 'admin_staff' %}active{% endif %}">
+        <a href="{{ url_for('admin.admin_staff') }}" class="bn-item {% if request.endpoint == 'admin_staff' %}active{% endif %}">
             <i class="fa-solid fa-users"></i><span>Staff</span>
         </a>
         {% endif %}
-        <a href="{{ url_for('admin_settings') }}" class="bn-item {% if request.endpoint == 'admin_settings' %}active{% endif %}">
+        <a href="{{ url_for('admin.admin_settings') }}" class="bn-item {% if request.endpoint == 'admin_settings' %}active{% endif %}">
             <i class="fa-solid fa-gear"></i><span>Settings</span>
         </a>
         {% else %}
-        <a href="{{ url_for('index') }}" class="bn-item {% if request.endpoint == 'index' %}active{% endif %}">
+        <a href="{{ url_for('public.index') }}" class="bn-item {% if request.endpoint == 'index' %}active{% endif %}">
             <i class="fa-solid fa-house"></i><span>Home</span>
         </a>
-        <a href="{{ url_for('submit_complaint') }}" class="bn-item {% if request.endpoint == 'submit_complaint' %}active{% endif %}">
+        <a href="{{ url_for('public.submit_complaint') }}" class="bn-item {% if request.endpoint == 'submit_complaint' %}active{% endif %}">
             <i class="fa-solid fa-plus"></i><span>Report</span>
         </a>
-        <a href="{{ url_for('track') }}" class="bn-item {% if request.endpoint == 'track' %}active{% endif %}">
+        <a href="{{ url_for('public.track') }}" class="bn-item {% if request.endpoint == 'track' %}active{% endif %}">
             <i class="fa-solid fa-magnifying-glass"></i><span>Track</span>
         </a>
-        <a href="{{ url_for('admin_login') }}" class="bn-item {% if request.endpoint == 'admin_login' %}active{% endif %}">
+        <a href="{{ url_for('admin.admin_login') }}" class="bn-item {% if request.endpoint == 'admin_login' %}active{% endif %}">
             <i class="fa-solid fa-user-shield"></i><span>Staff</span>
         </a>
         {% endif %}

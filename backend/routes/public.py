@@ -80,7 +80,7 @@ def index():
         cur.close()
         conn.close()
     except Exception as e:
-        app.logger.error("index stats: %s", e)
+        current_app.logger.error("index stats: %s", e)
     return render_template(
         "index.html",
         categories=get_active_categories(),
@@ -102,12 +102,12 @@ def submit_complaint():
     ip = request.headers.get("X-Forwarded-For", request.remote_addr) or "unknown"
     if not check_rate_limit(f"submit:{ip}", max_requests=5, window_seconds=300):
         flash("Too many submissions. Please wait a few minutes.", "error")
-        return redirect(url_for("submit_complaint"))
+        return redirect(url_for("public.submit_complaint"))
 
     token = request.form.get("csrf_token", "")
     if not validate_csrf_token(token):
         flash("Invalid security token. Please try again.", "error")
-        return redirect(url_for("submit_complaint"))
+        return redirect(url_for("public.submit_complaint"))
 
     category = sanitize_text(request.form.get("category", ""), 100)
     location = sanitize_text(request.form.get("location", ""), 255)
@@ -135,7 +135,7 @@ def submit_complaint():
 
     if not category or not location or not description:
         flash("Category, location, and description are required.", "error")
-        return redirect(url_for("submit_complaint"))
+        return redirect(url_for("public.submit_complaint"))
     if priority not in PRIORITIES:
         priority = "Normal"
     if category not in active_cats:
@@ -149,7 +149,7 @@ def submit_complaint():
                 photo_path = process_and_save_image(f)
             except ValueError as e:
                 flash(str(e), "error")
-                return redirect(url_for("submit_complaint"))
+                return redirect(url_for("public.submit_complaint"))
 
     # Prefer logged-in resident profile for identity
     resident_id = session.get("resident_id") if session.get("resident_logged_in") else None
@@ -226,8 +226,8 @@ def submit_complaint():
         )
     except Exception as e:
         flash(f"Error saving complaint. Please try again.", "error")
-        app.logger.error(f"Submit error: {e}")
-        return redirect(url_for("submit_complaint"))
+        current_app.logger.error(f"Submit error: {e}")
+        return redirect(url_for("public.submit_complaint"))
 
 
 @bp.route("/track", methods=["GET", "POST"], endpoint="track")
@@ -294,7 +294,7 @@ def track():
             conn.close()
         except Exception as e:
             flash("Lookup error. Please try again.", "error")
-            app.logger.error(e)
+            current_app.logger.error(e)
 
     return render_template(
         "track.html",
@@ -314,12 +314,12 @@ def resident_send_message():
     ip = request.headers.get("X-Forwarded-For", request.remote_addr) or "unknown"
     if not check_rate_limit(f"msg:{ip}", max_requests=15, window_seconds=60):
         flash("Too many messages. Please slow down.", "error")
-        return redirect(request.referrer or url_for("track"))
+        return redirect(request.referrer or url_for("public.track"))
 
     token = request.form.get("csrf_token", "")
     if not validate_csrf_token(token):
         flash("Invalid security token.", "error")
-        return redirect(request.referrer or url_for("track"))
+        return redirect(request.referrer or url_for("public.track"))
 
     tracking = sanitize_text(request.form.get("tracking_number", ""), 50)
     body = sanitize_text(request.form.get("body", ""), 1000)
@@ -327,7 +327,7 @@ def resident_send_message():
 
     if not tracking or not body:
         flash("Message cannot be empty.", "error")
-        return redirect(url_for("track", tracking=tracking))
+        return redirect(url_for("public.track", tracking=tracking))
 
     if not tracking.startswith("#"):
         tracking = "#" + tracking
@@ -341,7 +341,7 @@ def resident_send_message():
             flash("Complaint not found.", "error")
             cur.close()
             conn.close()
-            return redirect(url_for("track"))
+            return redirect(url_for("public.track"))
         # Prefer logged-in resident identity
         if session.get("resident_logged_in"):
             sender_name = session.get("resident_name") or sender_name
@@ -378,8 +378,8 @@ def resident_send_message():
         flash("Message sent.", "success")
     except Exception as e:
         flash("Could not send message.", "error")
-        app.logger.error(e)
-    return redirect(url_for("track", tracking=tracking))
+        current_app.logger.error(e)
+    return redirect(url_for("public.track", tracking=tracking))
 
 
 @bp.route("/confirm/<path:tracking_number>", methods=["POST"], endpoint="confirm_resolution")
@@ -390,7 +390,7 @@ def confirm_resolution(tracking_number):
     token = request.form.get("csrf_token", "")
     if not validate_csrf_token(token):
         flash("Invalid security token.", "error")
-        return redirect(url_for("track", tracking=tracking_number))
+        return redirect(url_for("public.track", tracking=tracking_number))
 
     tracking_number = sanitize_text(tracking_number, 50)
     if not tracking_number.startswith("#"):
@@ -459,8 +459,8 @@ def confirm_resolution(tracking_number):
         conn.close()
     except Exception as e:
         flash("Error confirming.", "error")
-        app.logger.error(e)
-    return redirect(url_for("track", tracking=tracking_number))
+        current_app.logger.error(e)
+    return redirect(url_for("public.track", tracking=tracking_number))
 
 
 @bp.route("/uploads/<path:filename>", endpoint="serve_upload")
@@ -469,7 +469,7 @@ def serve_upload(filename):
     safe = secure_filename(filename)
     if not safe or ".." in filename or filename.startswith("/"):
         abort(404)
-    return send_from_directory(app.config["UPLOAD_FOLDER"], safe)
+    return send_from_directory(UPLOAD_FOLDER, safe)
 
 
 # ─── Admin auth ────────────────────────────────────────────────────────────
@@ -480,12 +480,12 @@ def serve_upload(filename):
 @bp.route("/resident/register", methods=["GET", "POST"], endpoint="resident_register")
 def resident_register():
     flash("Resident accounts are not used. Track with your number or enable browser alerts.", "success")
-    return redirect(url_for("track"))
+    return redirect(url_for("public.track"))
 
     if session.get("resident_logged_in"):
-        return redirect(url_for("resident_dashboard"))
+        return redirect(url_for("public.resident_dashboard"))
     if session.get("admin_logged_in"):
-        return redirect(url_for("admin_dashboard"))
+        return redirect(url_for("admin.admin_dashboard"))
 
     if request.method == "POST":
         ip = client_ip()
@@ -523,7 +523,7 @@ def resident_register():
                 cur.close()
                 conn.close()
                 flash("An account with that email already exists. Please log in.", "error")
-                return redirect(url_for("resident_login"))
+                return redirect(url_for("public.resident_login"))
             cur.execute(
                 """
                 INSERT INTO residents (email, password_hash, full_name, contact, address)
@@ -548,9 +548,9 @@ def resident_register():
             session["resident_email"] = row["email"]
             session.permanent = True
             flash("Account created. Welcome!", "success")
-            return redirect(url_for("resident_dashboard"))
+            return redirect(url_for("public.resident_dashboard"))
         except Exception as e:
-            app.logger.error(e)
+            current_app.logger.error(e)
             flash("Registration failed. Please try again.", "error")
 
     return render_template("resident_register.html")
@@ -559,12 +559,12 @@ def resident_register():
 @bp.route("/resident/login", methods=["GET", "POST"], endpoint="resident_login")
 def resident_login():
     flash("Resident accounts are not used. Track with your number or enable browser alerts.", "success")
-    return redirect(url_for("admin_login"))
+    return redirect(url_for("admin.admin_login"))
 
     if session.get("resident_logged_in"):
-        return redirect(url_for("resident_dashboard"))
+        return redirect(url_for("public.resident_dashboard"))
     if session.get("admin_logged_in"):
-        return redirect(url_for("admin_dashboard"))
+        return redirect(url_for("admin.admin_dashboard"))
 
     if request.method == "POST":
         ip = client_ip()
@@ -609,14 +609,14 @@ def resident_login():
                 session["resident_email"] = row["email"]
                 session.permanent = True
                 flash(f"Welcome back, {row['full_name']}.", "success")
-                next_url = request.args.get("next") or url_for("resident_dashboard")
+                next_url = request.args.get("next") or url_for("public.resident_dashboard")
                 if not next_url.startswith("/"):
-                    next_url = url_for("resident_dashboard")
+                    next_url = url_for("public.resident_dashboard")
                 return redirect(next_url)
             cur.close()
             conn.close()
         except Exception as e:
-            app.logger.error(e)
+            current_app.logger.error(e)
         flash("Invalid email or password.", "error")
 
     return render_template("resident_login.html")
@@ -625,7 +625,7 @@ def resident_login():
 @bp.route("/resident/logout", endpoint="resident_logout")
 def resident_logout():
     flash("Resident accounts are not used. Track with your number or enable browser alerts.", "success")
-    return redirect(url_for("index"))
+    return redirect(url_for("public.index"))
 
     try:
         log_activity("resident.logout")
@@ -633,14 +633,14 @@ def resident_logout():
         pass
     session.clear()
     flash("You have been logged out.", "success")
-    return redirect(url_for("index"))
+    return redirect(url_for("public.index"))
 
 
 @bp.route("/resident/dashboard", endpoint="resident_dashboard")
 @resident_login_required
 def resident_dashboard():
     flash("Resident accounts are not used. Track with your number or enable browser alerts.", "success")
-    return redirect(url_for("track"))
+    return redirect(url_for("public.track"))
 
     complaints = []
     stats = {"total": 0, "open": 0, "resolved": 0, "confirmed": 0}
@@ -715,7 +715,7 @@ def resident_dashboard():
         cur.close()
         conn.close()
     except Exception as e:
-        app.logger.error(e)
+        current_app.logger.error(e)
         flash("Could not load your complaints.", "error")
     return render_template(
         "resident_dashboard.html",
@@ -731,7 +731,7 @@ def resident_dashboard():
 @resident_login_required
 def resident_notifications():
     flash("Resident accounts are not used. Track with your number or enable browser alerts.", "success")
-    return redirect(url_for("track"))
+    return redirect(url_for("public.track"))
 
     items = []
     try:
@@ -761,7 +761,7 @@ def resident_notifications():
         cur.close()
         conn.close()
     except Exception as e:
-        app.logger.error(e)
+        current_app.logger.error(e)
     return render_template("resident_notifications.html", notifications=items)
 
 
@@ -786,7 +786,5 @@ def resident_notification_read(nid):
         if row and row.get("link"):
             return redirect(row["link"])
     except Exception as e:
-        app.logger.error(e)
-    return redirect(url_for("resident_notifications"))
-
-
+        current_app.logger.error(e)
+    return redirect(url_for("public.resident_notifications"))

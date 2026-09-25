@@ -18,13 +18,13 @@
                 </button>
             </div>
             <div class="success-actions">
-                <a href="{{ url_for('track', tracking=tracking_number) }}" class="btn btn-primary">
+                <a href="{{ url_for('public.track', tracking=tracking_number) }}" class="btn btn-primary">
                     <i class="fa-solid fa-magnifying-glass"></i> Track This Complaint
                 </a>
-                <a href="{{ url_for('submit_complaint') }}" class="btn btn-outline">
+                <a href="{{ url_for('public.submit_complaint') }}" class="btn btn-outline">
                     <i class="fa-solid fa-plus"></i> Submit Another
                 </a>
-                <a href="{{ url_for('index') }}" class="btn btn-outline">
+                <a href="{{ url_for('public.index') }}" class="btn btn-outline">
                     <i class="fa-solid fa-house"></i> Home
                 </a>
             </div>

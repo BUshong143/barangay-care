@@ -13,7 +13,7 @@
 <section class="form-section">
     <div class="container">
         <div class="card form-card">
-            <form id="complaintForm" method="POST" action="{{ url_for('submit_complaint') }}"
+            <form id="complaintForm" method="POST" action="{{ url_for('public.submit_complaint') }}"
                   enctype="multipart/form-data" class="complaint-form" novalidate>
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="latitude" id="latitude" value="">
@@ -112,7 +112,7 @@
                             <span class="mini-spinner white"></span> Submitting...
                         </span>
                     </button>
-                    <a href="{{ url_for('index') }}" class="btn btn-outline">Cancel</a>
+                    <a href="{{ url_for('public.index') }}" class="btn btn-outline">Cancel</a>
                 </div>
             </form>
         </div>

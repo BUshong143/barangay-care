@@ -12,7 +12,7 @@
 
 <section class="form-section">
     <div class="container">
-        <a href="{{ url_for('resident_dashboard') }}" class="btn btn-outline" style="margin-bottom:1rem;">
+        <a href="{{ url_for('public.resident_dashboard') }}" class="btn btn-outline" style="margin-bottom:1rem;">
             <i class="fa-solid fa-arrow-left"></i> Back to dashboard
         </a>
 
@@ -34,7 +34,7 @@
                             <div style="color:var(--slate-400);font-size:0.8rem;margin-top:0.3rem;">{{ format_ph(n.created_at) }}</div>
                         </div>
                         {% if n.link %}
-                        <form method="POST" action="{{ url_for('resident_notification_read', nid=n.id) }}">
+                        <form method="POST" action="{{ url_for('public.resident_notification_read', nid=n.id) }}">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn btn-sm btn-outline">Open</button>
                         </form>

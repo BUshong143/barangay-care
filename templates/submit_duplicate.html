@@ -22,7 +22,7 @@
                     <span class="badge badge-{{ d.priority|lower }}">{{ d.priority }}</span>
                     <div style="font-size:0.9rem;margin-top:0.25rem;">{{ d.category }} · {{ d.location }}</div>
                     <div style="font-size:0.8rem;color:var(--slate-500);">{{ format_ph(d.created_at) }}</div>
-                    <a href="{{ url_for('track', tracking=d.tracking_number) }}" class="btn btn-sm btn-outline" style="margin-top:0.4rem;">
+                    <a href="{{ url_for('public.track', tracking=d.tracking_number) }}" class="btn btn-sm btn-outline" style="margin-top:0.4rem;">
                         Track this case
                     </a>
                 </li>
@@ -33,7 +33,7 @@
         <div class="card">
             <h3>Still want to submit?</h3>
             <p class="field-hint">If this is a different issue, confirm below to file a new complaint.</p>
-            <form method="POST" action="{{ url_for('submit_complaint') }}" enctype="multipart/form-data" class="action-form">
+            <form method="POST" action="{{ url_for('public.submit_complaint') }}" enctype="multipart/form-data" class="action-form">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="force_submit" value="1">
                 <input type="hidden" name="category" value="{{ form.category }}">
@@ -48,7 +48,7 @@
                     <button type="submit" class="btn btn-primary">
                         <i class="fa-solid fa-paper-plane"></i> Submit new complaint anyway
                     </button>
-                    <a href="{{ url_for('submit_complaint') }}" class="btn btn-outline">Cancel / edit</a>
+                    <a href="{{ url_for('public.submit_complaint') }}" class="btn btn-outline">Cancel / edit</a>
                 </div>
             </form>
         </div>

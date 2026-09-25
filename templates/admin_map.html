@@ -20,12 +20,12 @@
                 <span class="map-legend">{{ points|length }} geo-tagged case{{ 's' if points|length != 1 else '' }}</span>
             </div>
             <div class="map-toolbar">
-                <a href="{{ url_for('admin_map', open='1') }}" class="btn btn-sm {% if open_only %}btn-primary{% else %}btn-outline{% endif %}">Open cases</a>
-                <a href="{{ url_for('admin_map', open='0') }}" class="btn btn-sm {% if not open_only %}btn-primary{% else %}btn-outline{% endif %}">All cases</a>
+                <a href="{{ url_for('api.admin_map', open='1') }}" class="btn btn-sm {% if open_only %}btn-primary{% else %}btn-outline{% endif %}">Open cases</a>
+                <a href="{{ url_for('api.admin_map', open='0') }}" class="btn btn-sm {% if not open_only %}btn-primary{% else %}btn-outline{% endif %}">All cases</a>
                 <button type="button" class="btn btn-sm btn-outline" id="btnToggleHeat">
                     <i class="fa-solid fa-fire"></i> Toggle heatmap
                 </button>
-                <a href="{{ url_for('admin_stats_dashboard') }}" class="btn btn-sm btn-outline">Dashboard</a>
+                <a href="{{ url_for('admin.admin_stats_dashboard') }}" class="btn btn-sm btn-outline">Dashboard</a>
             </div>
             <div id="complaintsMap"></div>
             <p class="field-hint" style="margin-top:0.75rem;">

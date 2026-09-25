@@ -70,13 +70,13 @@
         <div class="card" style="margin-top:1.25rem;">
             <h3><i class="fa-solid fa-download"></i> Download</h3>
             <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.75rem;">
-                <a class="btn btn-primary" href="{{ url_for('admin_reports_pdf', year=year, month=month or '') }}">
+                <a class="btn btn-primary" href="{{ url_for('api.admin_reports_pdf', year=year, month=month or '') }}">
                     <i class="fa-solid fa-file-pdf"></i> PDF report
                 </a>
-                <a class="btn btn-outline" href="{{ url_for('admin_export_csv', year=year, month=month or '') }}">
+                <a class="btn btn-outline" href="{{ url_for('api.admin_export_csv', year=year, month=month or '') }}">
                     <i class="fa-solid fa-file-csv"></i> CSV export
                 </a>
-                <a class="btn btn-outline" href="{{ url_for('admin_export_xlsx', year=year, month=month or '') }}">
+                <a class="btn btn-outline" href="{{ url_for('api.admin_export_xlsx', year=year, month=month or '') }}">
                     <i class="fa-solid fa-file-excel"></i> Excel export
                 </a>
             </div>
