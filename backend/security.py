@@ -24,6 +24,7 @@ from backend.helpers import (
 
 csrf_serializer = URLSafeTimedSerializer(SECRET_KEY)
 _rate_limit_store = {}
+MAX_IMAGE_DIMENSION = 1600
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
