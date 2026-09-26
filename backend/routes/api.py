@@ -1002,6 +1002,44 @@ def api_push_unsubscribe():
         return jsonify({"error": "Could not unsubscribe"}), 500
 
 
+@bp.route("/api/push/resubscribe", methods=["POST"], endpoint="api_push_resubscribe")
+def api_push_resubscribe():
+    """Browsers periodically rotate/expire push subscriptions in the background
+    (pushsubscriptionchange). This swaps every row keyed by the old endpoint over
+    to the new one, so notifications keep working without the resident re-enabling."""
+    data = request.get_json(silent=True) or {}
+    old_endpoint = (data.get("old_endpoint") or "").strip()
+    sub = data.get("subscription") or {}
+    new_endpoint = (sub.get("endpoint") or "").strip()
+    keys = sub.get("keys") or {}
+    p256dh = (keys.get("p256dh") or "").strip()
+    auth = (keys.get("auth") or "").strip()
+    if not new_endpoint or not p256dh or not auth:
+        return jsonify({"error": "subscription keys required"}), 400
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        if old_endpoint:
+            cur.execute(
+                """
+                UPDATE push_subscriptions
+                SET endpoint = %s, p256dh = %s, auth = %s
+                WHERE endpoint = %s
+                """,
+                (new_endpoint, p256dh, auth, old_endpoint),
+            )
+            updated = cur.rowcount
+        else:
+            updated = 0
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"ok": True, "updated": updated})
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify({"error": "Could not update subscription"}), 500
+
+
 @bp.route("/api/push/status", endpoint="api_push_status")
 def api_push_status():
     """Whether Web Push / FCM is configured (reads env at request time)."""
@@ -1140,5 +1178,3 @@ def service_worker():
         "sw.js",
         mimetype="application/javascript",
     )
-
-

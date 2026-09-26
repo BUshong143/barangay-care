@@ -1,4 +1,13 @@
 /* Barangay Care — Web Push service worker (tracking-number based) */
+
+self.addEventListener('install', function (event) {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', function (event) {
+  event.waitUntil(clients.claim());
+});
+
 self.addEventListener('push', function (event) {
   var data = { title: 'Barangay Care', body: '', url: '/track' };
   try {
@@ -35,5 +44,42 @@ self.addEventListener('notificationclick', function (event) {
       }
       if (clients.openWindow) return clients.openWindow(url);
     })
+  );
+});
+
+function urlBase64ToUint8Array(base64String) {
+  var padding = '='.repeat((4 - base64String.length % 4) % 4);
+  var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  var rawData = self.atob(base64);
+  var outputArray = new Uint8Array(rawData.length);
+  for (var i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+
+/* Browsers rotate/expire the push subscription in the background, with the
+   page and service worker both closed. Without this handler, notifications
+   would silently stop weeks later even though everything looked configured. */
+self.addEventListener('pushsubscriptionchange', function (event) {
+  var oldEndpoint = (event.oldSubscription && event.oldSubscription.endpoint) || '';
+  event.waitUntil(
+    fetch('/api/push/vapid-public-key')
+      .then(function (r) { return r.json(); })
+      .then(function (keyRes) {
+        if (!keyRes.publicKey) throw new Error('no public key');
+        return self.registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(keyRes.publicKey),
+        });
+      })
+      .then(function (newSub) {
+        return fetch('/api/push/resubscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ old_endpoint: oldEndpoint, subscription: newSub.toJSON() }),
+        });
+      })
+      .catch(function (e) {
+        // Best effort — nothing to show the user here, service worker has no UI.
+      })
   );
 });
