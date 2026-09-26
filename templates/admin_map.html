@@ -2,36 +2,26 @@
 {% block title %}Complaint Map — Admin{% endblock %}
 
 {% block extra_css %}
-<style>
-#complaintsMap { height: 70vh; min-height: 420px; border-radius: 16px; z-index: 1; }
-.map-toolbar { display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem; align-items:center; }
-.map-legend { font-size:0.85rem; color:var(--slate-600); }
-</style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 {% endblock %}
 
 {% block content %}
-<section class="admin-section">
-    <div class="container">
-        <div class="card">
-            <div class="dash-panel-header" style="margin-bottom:0.75rem;">
-                <h2><i class="fa-solid fa-map-location-dot"></i> Complaint Map &amp; Hotspots</h2>
-                <span class="map-legend">{{ points|length }} geo-tagged case{{ 's' if points|length != 1 else '' }}</span>
-            </div>
+<section class="admin-section map-page">
+    <div class="map-page-layout">
+        <div class="map-controls">
+            <h1 class="page-title">Map</h1>
+            <p class="map-count">{{ points|length }} geo-tagged case{{ 's' if points|length != 1 else '' }}</p>
             <div class="map-toolbar">
-                <a href="{{ url_for('api.admin_map', open='1') }}" class="btn btn-sm {% if open_only %}btn-primary{% else %}btn-outline{% endif %}">Open cases</a>
-                <a href="{{ url_for('api.admin_map', open='0') }}" class="btn btn-sm {% if not open_only %}btn-primary{% else %}btn-outline{% endif %}">All cases</a>
-                <button type="button" class="btn btn-sm btn-outline" id="btnToggleHeat">
-                    <i class="fa-solid fa-fire"></i> Toggle heatmap
+                <a href="{{ url_for('api.admin_map', open='1') }}" class="btn btn-sm {% if open_only %}btn-primary{% else %}btn-secondary{% endif %}">Open cases</a>
+                <a href="{{ url_for('api.admin_map', open='0') }}" class="btn btn-sm {% if not open_only %}btn-primary{% else %}btn-secondary{% endif %}">All cases</a>
+                <button type="button" class="btn btn-sm btn-secondary" id="btnToggleHeat">
+                    <i class="fa-solid fa-fire" aria-hidden="true"></i> Heatmap
                 </button>
-                <a href="{{ url_for('admin.admin_stats_dashboard') }}" class="btn btn-sm btn-outline">Dashboard</a>
             </div>
-            <div id="complaintsMap"></div>
-            <p class="field-hint" style="margin-top:0.75rem;">
-                Markers show individual complaints. Heatmap highlights geographic hotspots.
-            </p>
+            <p class="field-hint">Select a marker for case details. Heatmap shows hotspots.</p>
         </div>
+        <div id="complaintsMap" class="complaints-map" role="img" aria-label="Complaint locations map"></div>
     </div>
 </section>
 {% endblock %}
@@ -55,10 +45,12 @@
     points.forEach(function (p) {
         var m = L.marker([p.lat, p.lng]);
         m.bindPopup(
+            '<div class="map-popup">' +
             '<strong>' + p.tracking + '</strong><br>' +
             p.category + ' · ' + p.status + '<br>' +
             (p.location || '') + '<br>' +
-            '<a href="/admin/complaint/' + p.id + '">Open case</a>'
+            '<a href="/admin/complaint/' + p.id + '">View complaint</a>' +
+            '</div>'
         );
         cluster.addLayer(m);
         heatData.push([p.lat, p.lng, p.priority === 'Urgent' ? 1.0 : 0.6]);
@@ -69,19 +61,20 @@
 
     var heatLayer = null;
     var heatOn = false;
-    document.getElementById('btnToggleHeat').addEventListener('click', function () {
+    var heatBtn = document.getElementById('btnToggleHeat');
+    if (heatBtn) heatBtn.addEventListener('click', function () {
         if (!window.L.heatLayer) return;
         if (heatOn) {
             if (heatLayer) map.removeLayer(heatLayer);
             heatOn = false;
             this.classList.remove('btn-primary');
-            this.classList.add('btn-outline');
+            this.classList.add('btn-secondary');
         } else {
             heatLayer = L.heatLayer(heatData, { radius: 28, blur: 18, maxZoom: 17 });
             map.addLayer(heatLayer);
             heatOn = true;
             this.classList.add('btn-primary');
-            this.classList.remove('btn-outline');
+            this.classList.remove('btn-secondary');
         }
     });
 })();

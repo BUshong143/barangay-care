@@ -1,16 +1,41 @@
 {% extends "base.html" %}
-{% block title %}Error {{ code }} — Barangay Care{% endblock %}
+{% block title %}{% if code == 404 %}Page not found{% else %}Something went wrong{% endif %} — Barangay Care{% endblock %}
 
 {% block content %}
-<section class="success-section">
+<section class="error-section">
     <div class="container">
-        <div class="card success-card">
-            <div class="success-icon error-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
-            <h1>Error {{ code }}</h1>
-            <p class="success-msg">{{ message }}</p>
-            <a href="{{ url_for('public.index') }}" class="btn btn-primary">
-                <i class="fa-solid fa-house"></i> Back to Home
-            </a>
+        <div class="card error-card" role="alert">
+            <div class="error-icon-wrap" aria-hidden="true">
+                {% if code == 404 %}
+                <i class="fa-solid fa-map-signs"></i>
+                {% else %}
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                {% endif %}
+            </div>
+            <h1>
+                {% if code == 404 %}
+                Page not found
+                {% else %}
+                Something went wrong
+                {% endif %}
+            </h1>
+            <p class="error-msg">
+                {% if message and code == 404 %}
+                {{ message }}
+                {% elif code == 404 %}
+                We couldn’t find that page. It may have been moved or the link is incorrect.
+                {% else %}
+                We couldn’t complete that request right now. Please try again in a moment.
+                {% endif %}
+            </p>
+            <div class="error-actions">
+                <a href="{{ url_for('public.index') }}" class="btn btn-primary">
+                    <i class="fa-solid fa-house" aria-hidden="true"></i> Back to Home
+                </a>
+                <button type="button" class="btn btn-secondary" onclick="history.back()">
+                    Try again
+                </button>
+            </div>
         </div>
     </div>
 </section>

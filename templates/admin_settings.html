@@ -4,12 +4,16 @@
 {% block content %}
 <section class="admin-section">
     <div class="container">
-        <div class="settings-layout">
+        <header class="admin-dash-header">
+            <h1 class="page-title">Settings</h1>
+            <p class="page-subhead">Account, appearance, and session.</p>
+        </header>
 
-            <!-- Left column: profile + password -->
+        <div class="settings-layout">
             <div class="settings-col settings-col-main">
+                <p class="settings-group-label">Account</p>
                 <div class="card settings-card">
-                    <h3><i class="fa-solid fa-id-badge"></i> Display Name</h3>
+                    <h3 class="card-section-title">Display name</h3>
                     {% if account %}
                     <p class="field-hint settings-card-intro">This is the name residents and other staff see on your cases.</p>
                     <form method="POST" class="action-form" data-loader="Saving...">
@@ -30,7 +34,7 @@
                 </div>
 
                 <div class="card settings-card">
-                    <h3><i class="fa-solid fa-lock"></i> Change Password</h3>
+                    <h3 class="card-section-title">Change password</h3>
                     {% if account %}
                     <p class="field-hint settings-card-intro">Use a password you don't use elsewhere.</p>
                     <form method="POST" class="action-form" data-loader="Updating...">
@@ -94,8 +98,9 @@
                     </div>
                 </div>
 
+                <p class="settings-group-label">System</p>
                 <div class="card settings-card settings-theme-card desktop-only-block">
-                    <h3><i class="fa-solid fa-circle-half-stroke"></i> Appearance</h3>
+                    <h3 class="card-section-title">Appearance</h3>
                     <p class="field-hint settings-card-intro">Switch between light and dark mode.</p>
                     <button type="button" id="settingsThemeToggle" class="btn btn-outline btn-block">
                         <i class="fa-solid fa-moon" id="settingsThemeIcon"></i>
@@ -104,7 +109,7 @@
                 </div>
 
                 <div class="card settings-card settings-logout-card">
-                    <h3><i class="fa-solid fa-right-from-bracket"></i> Log Out</h3>
+                    <h3 class="card-section-title">Log out</h3>
                     <p class="field-hint settings-card-intro">End your current staff session on this device.</p>
                     <a href="{{ url_for('admin.admin_logout') }}" class="btn btn-outline btn-danger btn-block">
                         <i class="fa-solid fa-right-from-bracket"></i> Logout

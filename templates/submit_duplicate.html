@@ -5,25 +5,31 @@
 {% block content %}
 <section class="page-header">
     <div class="container">
-        <h1><i class="fa-solid fa-clone"></i> Similar complaint found</h1>
-        <p>We found open complaint(s) that look similar. You can track an existing one or submit anyway.</p>
+        <h1>Similar complaint found</h1>
+        <p>We found open complaint(s) that look similar. Track an existing one or submit anyway.</p>
     </div>
 </section>
 
 <section class="form-section">
     <div class="container">
-        <div class="card" style="margin-bottom:1.25rem;">
-            <h3>Possible matches</h3>
-            <ul style="list-style:none;padding:0;margin:0.75rem 0 0;">
+        <div class="card" style="margin-bottom: var(--space-4);">
+            <h2 class="section-title" style="font-size: 1.05rem; margin-bottom: var(--space-3);">Existing cases</h2>
+            <ul class="complaint-list">
                 {% for d in duplicates %}
-                <li style="padding:0.75rem 0;border-bottom:1px solid var(--slate-100);">
-                    <strong>{{ d.tracking_number }}</strong>
-                    <span class="badge badge-status-{{ d.status|lower|replace(' ', '-') }}">{{ d.status }}</span>
-                    <span class="badge badge-{{ d.priority|lower }}">{{ d.priority }}</span>
-                    <div style="font-size:0.9rem;margin-top:0.25rem;">{{ d.category }} · {{ d.location }}</div>
-                    <div style="font-size:0.8rem;color:var(--slate-500);">{{ format_ph(d.created_at) }}</div>
-                    <a href="{{ url_for('public.track', tracking=d.tracking_number) }}" class="btn btn-sm btn-outline" style="margin-top:0.4rem;">
-                        Track this case
+                <li class="complaint-list-item">
+                    <div class="cli-main">
+                        <div class="cli-title-row">
+                            <span class="cli-ref">{{ d.tracking_number }}</span>
+                            <span class="status-pill status-{{ d.status|lower|replace(' ', '-') }}">{{ d.status }}</span>
+                        </div>
+                        <p class="cli-category">{{ d.category }}</p>
+                        <p class="cli-meta">
+                            <span><i class="fa-solid fa-location-dot" aria-hidden="true"></i> {{ d.location }}</span>
+                            <span>{{ format_ph(d.created_at) }}</span>
+                        </p>
+                    </div>
+                    <a href="{{ url_for('public.track', tracking=d.tracking_number) }}" class="btn btn-secondary btn-sm">
+                        Track
                     </a>
                 </li>
                 {% endfor %}
@@ -31,7 +37,7 @@
         </div>
 
         <div class="card">
-            <h3>Still want to submit?</h3>
+            <h2 class="section-title" style="font-size: 1.05rem; margin-bottom: var(--space-2);">Still want to submit?</h2>
             <p class="field-hint">If this is a different issue, confirm below to file a new complaint.</p>
             <form method="POST" action="{{ url_for('public.submit_complaint') }}" enctype="multipart/form-data" class="action-form">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -44,11 +50,11 @@
                 <input type="hidden" name="resident_contact" value="{{ form.resident_contact }}">
                 {% if form.latitude %}<input type="hidden" name="latitude" value="{{ form.latitude }}">{% endif %}
                 {% if form.longitude %}<input type="hidden" name="longitude" value="{{ form.longitude }}">{% endif %}
-                <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.75rem;">
+                <div class="wizard-actions" style="margin-top: var(--space-4);">
                     <button type="submit" class="btn btn-primary">
-                        <i class="fa-solid fa-paper-plane"></i> Submit new complaint anyway
+                        <i class="fa-solid fa-paper-plane" aria-hidden="true"></i> Submit new complaint anyway
                     </button>
-                    <a href="{{ url_for('public.submit_complaint') }}" class="btn btn-outline">Cancel / edit</a>
+                    <a href="{{ url_for('public.submit_complaint') }}" class="btn btn-ghost">Cancel / edit</a>
                 </div>
             </form>
         </div>

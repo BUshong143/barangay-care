@@ -35,17 +35,18 @@
           crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=46">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=49">
     {% block extra_css %}{% endblock %}
 </head>
 <body class="has-bottom-nav {% if admin_logged_in %}admin-shell{% else %}public-shell{% endif %} {% block body_class %}{% endblock %}">
+    <a class="skip-to-content" href="#main-content">Skip to content</a>
     <div id="global-loader" class="loader-bar hidden" aria-hidden="true" role="status">
         <div class="loader-bar-inner"></div>
     </div>
 
     <div class="app-layout">
         {% if admin_logged_in %}
-        <!-- Staff desktop collapsible sidebar (Aether-style) — hidden for public/recipient role -->
+        <!-- Staff collapsible sidebar — grouped per redesign brief §5 -->
         <aside class="side-nav desktop-only" id="sideNav" aria-label="Staff navigation">
             <div class="side-nav-brand">
                 <div class="side-nav-avatar" aria-hidden="true" title="Barangay Care">
@@ -61,35 +62,61 @@
             </div>
 
             <nav class="side-nav-menu">
-                <a href="{{ url_for('admin.admin_stats_dashboard') }}" class="side-link {% if request.endpoint == 'admin_stats_dashboard' %}active{% endif %}" title="Dashboard">
-                    <i class="fa-solid fa-gauge-high"></i><span>Dashboard</span>
-                </a>
-                <a href="{{ url_for('admin.admin_dashboard') }}" class="side-link {% if request.endpoint in ['admin_dashboard', 'admin_complaint'] %}active{% endif %}" title="Cases">
-                    <i class="fa-solid fa-clipboard-list"></i><span>Cases</span>
-                </a>
+                <div class="side-nav-group" role="group" aria-label="Main">
+                    <span class="side-nav-label">Main</span>
+                    <a href="{{ url_for('admin.admin_stats_dashboard') }}" class="side-link {% if request.endpoint == 'admin_stats_dashboard' %}active{% endif %}" title="Dashboard">
+                        <i class="fa-solid fa-gauge-high"></i><span>Dashboard</span>
+                    </a>
+                    <a href="{{ url_for('admin.admin_dashboard') }}" class="side-link {% if request.endpoint in ['admin_dashboard', 'admin_complaint', 'admin_search'] %}active{% endif %}" title="Complaints">
+                        <i class="fa-solid fa-clipboard-list"></i><span>Complaints</span>
+                    </a>
+                </div>
+
                 {% if (staff_role or 'admin') == 'admin' %}
-                <a href="{{ url_for('admin.admin_staff') }}" class="side-link {% if request.endpoint == 'admin_staff' %}active{% endif %}" title="Staff">
-                    <i class="fa-solid fa-users"></i><span>Staff</span>
-                </a>
-                <a href="{{ url_for('api.admin_categories') }}" class="side-link {% if request.endpoint == 'admin_categories' %}active{% endif %}" title="Categories">
-                    <i class="fa-solid fa-tags"></i><span>Categories</span>
-                </a>
-                <a href="{{ url_for('api.admin_activity') }}" class="side-link {% if request.endpoint == 'admin_activity' %}active{% endif %}" title="Activity">
-                    <i class="fa-solid fa-clock-rotate-left"></i><span>Activity</span>
-                </a>
-                <a href="{{ url_for('api.admin_restore') }}" class="side-link {% if request.endpoint in ['admin_restore', 'admin_backup'] %}active{% endif %}" title="Backup">
-                    <i class="fa-solid fa-database"></i><span>Backup</span>
-                </a>
+                <div class="side-nav-group" role="group" aria-label="Management">
+                    <span class="side-nav-label">Management</span>
+                    <a href="{{ url_for('api.admin_categories') }}" class="side-link {% if request.endpoint == 'admin_categories' %}active{% endif %}" title="Categories">
+                        <i class="fa-solid fa-tags"></i><span>Categories</span>
+                    </a>
+                    <a href="{{ url_for('admin.admin_staff') }}" class="side-link {% if request.endpoint == 'admin_staff' %}active{% endif %}" title="Staff">
+                        <i class="fa-solid fa-users"></i><span>Staff</span>
+                    </a>
+                    <a href="{{ url_for('api.admin_map') }}" class="side-link {% if request.endpoint == 'admin_map' %}active{% endif %}" title="Map">
+                        <i class="fa-solid fa-map-location-dot"></i><span>Map</span>
+                    </a>
+                </div>
+                {% else %}
+                <div class="side-nav-group" role="group" aria-label="Management">
+                    <span class="side-nav-label">Management</span>
+                    <a href="{{ url_for('api.admin_map') }}" class="side-link {% if request.endpoint == 'admin_map' %}active{% endif %}" title="Map">
+                        <i class="fa-solid fa-map-location-dot"></i><span>Map</span>
+                    </a>
+                </div>
                 {% endif %}
-                <a href="{{ url_for('api.admin_map') }}" class="side-link {% if request.endpoint == 'admin_map' %}active{% endif %}" title="Map">
-                    <i class="fa-solid fa-map-location-dot"></i><span>Map</span>
-                </a>
-                <a href="{{ url_for('api.admin_reports') }}" class="side-link {% if request.endpoint == 'admin_reports' %}active{% endif %}" title="Reports">
-                    <i class="fa-solid fa-chart-line"></i><span>Reports</span>
-                </a>
-                <a href="{{ url_for('admin.admin_settings') }}" class="side-link {% if request.endpoint == 'admin_settings' %}active{% endif %}" title="Settings">
-                    <i class="fa-solid fa-gear"></i><span>Settings</span>
-                </a>
+
+                <div class="side-nav-group" role="group" aria-label="Reports">
+                    <span class="side-nav-label">Reports</span>
+                    <a href="{{ url_for('api.admin_reports') }}" class="side-link {% if request.endpoint == 'admin_reports' %}active{% endif %}" title="Reports">
+                        <i class="fa-solid fa-chart-line"></i><span>Reports</span>
+                    </a>
+                    {% if (staff_role or 'admin') == 'admin' %}
+                    <a href="{{ url_for('api.admin_activity') }}" class="side-link {% if request.endpoint == 'admin_activity' %}active{% endif %}" title="Activity">
+                        <i class="fa-solid fa-clock-rotate-left"></i><span>Activity</span>
+                    </a>
+                    {% endif %}
+                </div>
+
+                <div class="side-nav-group" role="group" aria-label="System">
+                    <span class="side-nav-label">System</span>
+                    <a href="{{ url_for('admin.admin_settings') }}" class="side-link {% if request.endpoint == 'admin_settings' %}active{% endif %}" title="Settings">
+                        <i class="fa-solid fa-gear"></i><span>Settings</span>
+                    </a>
+                    {% if (staff_role or 'admin') == 'admin' %}
+                    <a href="{{ url_for('api.admin_restore') }}" class="side-link {% if request.endpoint in ['admin_restore', 'admin_backup'] %}active{% endif %}" title="Backup">
+                        <i class="fa-solid fa-database"></i><span>Backup</span>
+                    </a>
+                    {% endif %}
+                </div>
             </nav>
 
             <div class="side-nav-footer">
@@ -98,11 +125,17 @@
                 </a>
             </div>
         </aside>
+
+        <!-- Mobile drawer backdrop -->
+        <div class="side-nav-backdrop" id="sideNavBackdrop" hidden></div>
         {% endif %}
 
         <div class="app-main">
             {% if admin_logged_in %}
             <header class="admin-toolbar">
+                <button type="button" class="side-nav-toggle" id="sideNavToggle" aria-label="Open menu" title="Menu">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
                 <form class="admin-search-form" method="GET" action="{{ url_for('admin.admin_dashboard') }}" role="search">
                     <i class="fa-solid fa-magnifying-glass admin-search-icon" aria-hidden="true"></i>
                     <input type="search" name="q" class="admin-search-input"
@@ -114,7 +147,54 @@
                     <i class="fa-solid fa-moon" id="mobileThemeIcon" aria-hidden="true"></i>
                 </button>
             </header>
+            {% else %}
+            <!-- Public / resident desktop top bar -->
+            <header class="public-topbar desktop-only-block" aria-label="Site navigation">
+                <div class="public-topbar-inner">
+                    <a href="{{ url_for('public.index') }}" class="nav-brand">
+                        <i class="fa-solid fa-landmark brand-icon" aria-hidden="true"></i>
+                        <span class="brand-text">Barangay Care</span>
+                    </a>
+                    <nav class="public-topbar-nav" aria-label="Primary">
+                        <a href="{{ url_for('public.index') }}" class="nav-link {% if request.endpoint == 'index' %}active-nav{% endif %}">
+                            <i class="fa-solid fa-house"></i><span>Home</span>
+                        </a>
+                        {% if resident_logged_in %}
+                        <a href="{{ url_for('public.resident_dashboard') }}" class="nav-link {% if request.endpoint == 'resident_dashboard' %}active-nav{% endif %}">
+                            <i class="fa-solid fa-clipboard-list"></i><span>My Complaints</span>
+                        </a>
+                        <a href="{{ url_for('public.submit_complaint') }}" class="nav-link {% if request.endpoint == 'submit_complaint' %}active-nav{% endif %}">
+                            <i class="fa-solid fa-plus"></i><span>Submit</span>
+                        </a>
+                        <a href="{{ url_for('public.resident_notifications') }}" class="nav-link {% if request.endpoint == 'resident_notifications' %}active-nav{% endif %}">
+                            <i class="fa-solid fa-bell"></i><span>Notifications</span>
+                            {% if unread_notifications %}<span class="nav-badge" aria-label="{{ unread_notifications }} unread">{{ unread_notifications }}</span>{% endif %}
+                        </a>
+                        <a href="{{ url_for('public.resident_dashboard') }}" class="nav-link {% if request.endpoint == 'resident_dashboard' %}active-nav{% endif %}" title="{{ resident_name or 'Account' }}">
+                            <i class="fa-solid fa-user"></i><span>{{ resident_name.split()[0] if resident_name else 'Account' }}</span>
+                        </a>
+                        {% else %}
+                        <a href="{{ url_for('public.submit_complaint') }}" class="nav-link {% if request.endpoint == 'submit_complaint' %}active-nav{% endif %}">
+                            <i class="fa-solid fa-plus"></i><span>Submit</span>
+                        </a>
+                        <a href="{{ url_for('public.track') }}" class="nav-link {% if request.endpoint == 'track' %}active-nav{% endif %}">
+                            <i class="fa-solid fa-magnifying-glass"></i><span>Track</span>
+                        </a>
+                        <a href="{{ url_for('public.resident_login') }}" class="nav-link {% if request.endpoint in ['resident_login', 'resident_register'] %}active-nav{% endif %}">
+                            <i class="fa-solid fa-user"></i><span>Sign in</span>
+                        </a>
+                        <a href="{{ url_for('admin.admin_login') }}" class="nav-link nav-staff-btn {% if request.endpoint == 'admin_login' %}active-nav{% endif %}">
+                            <i class="fa-solid fa-user-shield"></i><span>Staff</span>
+                        </a>
+                        {% endif %}
+                    </nav>
+                    <button type="button" id="themeToggle" class="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+                        <i class="fa-solid fa-moon" id="themeToggleIcon" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </header>
             {% endif %}
+
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
             <div class="flash-container" role="status" aria-live="polite">
@@ -134,29 +214,44 @@
             {% endif %}
             {% endwith %}
 
-            <main class="main-content">
+            <main class="main-content" id="main-content">
                 {% block content %}{% endblock %}
             </main>
 
         </div>
     </div>
 
-    <!-- Mobile bottom nav only -->
+    <!-- Mobile bottom nav -->
     <nav class="bottom-nav" id="bottomNav" aria-label="Main navigation">
         {% if admin_logged_in %}
         <a href="{{ url_for('admin.admin_stats_dashboard') }}" class="bn-item {% if request.endpoint == 'admin_stats_dashboard' %}active{% endif %}">
             <i class="fa-solid fa-gauge-high"></i><span>Dashboard</span>
         </a>
-        <a href="{{ url_for('admin.admin_dashboard') }}" class="bn-item {% if request.endpoint in ['admin_dashboard', 'admin_complaint'] %}active{% endif %}">
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="bn-item {% if request.endpoint in ['admin_dashboard', 'admin_complaint', 'admin_search'] %}active{% endif %}">
             <i class="fa-solid fa-clipboard-list"></i><span>Cases</span>
         </a>
-        {% if (staff_role or 'admin') == 'admin' %}
-        <a href="{{ url_for('admin.admin_staff') }}" class="bn-item {% if request.endpoint == 'admin_staff' %}active{% endif %}">
-            <i class="fa-solid fa-users"></i><span>Staff</span>
+        <a href="{{ url_for('api.admin_map') }}" class="bn-item {% if request.endpoint == 'admin_map' %}active{% endif %}">
+            <i class="fa-solid fa-map-location-dot"></i><span>Map</span>
         </a>
-        {% endif %}
         <a href="{{ url_for('admin.admin_settings') }}" class="bn-item {% if request.endpoint == 'admin_settings' %}active{% endif %}">
             <i class="fa-solid fa-gear"></i><span>Settings</span>
+        </a>
+        {% elif resident_logged_in %}
+        <a href="{{ url_for('public.index') }}" class="bn-item {% if request.endpoint == 'index' %}active{% endif %}">
+            <i class="fa-solid fa-house"></i><span>Home</span>
+        </a>
+        <a href="{{ url_for('public.resident_dashboard') }}" class="bn-item {% if request.endpoint == 'resident_dashboard' %}active{% endif %}">
+            <i class="fa-solid fa-clipboard-list"></i><span>My Cases</span>
+        </a>
+        <a href="{{ url_for('public.submit_complaint') }}" class="bn-item {% if request.endpoint == 'submit_complaint' %}active{% endif %}">
+            <i class="fa-solid fa-plus"></i><span>Submit</span>
+        </a>
+        <a href="{{ url_for('public.resident_notifications') }}" class="bn-item {% if request.endpoint == 'resident_notifications' %}active{% endif %}">
+            <i class="fa-solid fa-bell"></i><span>Alerts</span>
+            {% if unread_notifications %}<span class="bn-badge" aria-label="{{ unread_notifications }} unread">{{ unread_notifications if unread_notifications < 10 else '9+' }}</span>{% endif %}
+        </a>
+        <a href="{{ url_for('public.resident_dashboard') }}" class="bn-item {% if request.endpoint == 'resident_dashboard' %}active{% endif %}">
+            <i class="fa-solid fa-user"></i><span>Account</span>
         </a>
         {% else %}
         <a href="{{ url_for('public.index') }}" class="bn-item {% if request.endpoint == 'index' %}active{% endif %}">
@@ -168,15 +263,15 @@
         <a href="{{ url_for('public.track') }}" class="bn-item {% if request.endpoint == 'track' %}active{% endif %}">
             <i class="fa-solid fa-magnifying-glass"></i><span>Track</span>
         </a>
-        <a href="{{ url_for('admin.admin_login') }}" class="bn-item {% if request.endpoint == 'admin_login' %}active{% endif %}">
-            <i class="fa-solid fa-user-shield"></i><span>Staff</span>
+        <a href="{{ url_for('public.resident_login') }}" class="bn-item {% if request.endpoint in ['resident_login', 'resident_register'] %}active{% endif %}">
+            <i class="fa-solid fa-user"></i><span>Sign in</span>
         </a>
         {% endif %}
     </nav>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script src="{{ url_for('static', filename='js/main.js') }}?v=46"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}?v=49"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

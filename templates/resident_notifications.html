@@ -5,48 +5,69 @@
 {% block content %}
 <section class="page-header">
     <div class="container">
-        <h1><i class="fa-solid fa-bell"></i> Notifications</h1>
+        <h1>Notifications</h1>
         <p>Updates about your complaints and messages from staff.</p>
     </div>
 </section>
 
 <section class="form-section">
-    <div class="container">
-        <a href="{{ url_for('public.resident_dashboard') }}" class="btn btn-outline" style="margin-bottom:1rem;">
-            <i class="fa-solid fa-arrow-left"></i> Back to dashboard
-        </a>
+    <div class="container notif-page">
+        <div class="notif-toolbar">
+            <a href="{{ url_for('public.resident_dashboard') }}" class="btn btn-ghost btn-sm">
+                <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back
+            </a>
+        </div>
 
         {% if notifications %}
-        <div class="card">
-            <ul style="list-style:none;padding:0;margin:0;">
-                {% for n in notifications %}
-                <li style="padding:0.85rem 0;border-bottom:1px solid var(--slate-100);">
-                    <div style="display:flex;justify-content:space-between;gap:0.75rem;align-items:flex-start;">
-                        <div>
-                            {% if not n.is_read %}<strong>{% endif %}
-                            {{ n.title }}
-                            {% if not n.is_read %}</strong>
-                            <span class="badge badge-urgent" style="font-size:0.7rem;">New</span>
-                            {% endif %}
-                            {% if n.body %}
-                            <div style="color:var(--slate-600);margin-top:0.25rem;font-size:0.9rem;">{{ n.body }}</div>
-                            {% endif %}
-                            <div style="color:var(--slate-400);font-size:0.8rem;margin-top:0.3rem;">{{ format_ph(n.created_at) }}</div>
-                        </div>
-                        {% if n.link %}
-                        <form method="POST" action="{{ url_for('public.resident_notification_read', nid=n.id) }}">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <button type="submit" class="btn btn-sm btn-outline">Open</button>
-                        </form>
-                        {% endif %}
+        {% set ns = namespace(prev_label='') %}
+        <div class="notif-feed">
+            {% for n in notifications %}
+                {% set label = 'Earlier' %}
+                {% if n.created_at and now_ph is defined %}
+                    {% set td = now_ph().date() %}
+                    {% set nd = n.created_at.date() if n.created_at is not string else none %}
+                    {% if nd == td %}
+                        {% set label = 'Today' %}
+                    {% elif nd and (td - nd).days == 1 %}
+                        {% set label = 'Yesterday' %}
+                    {% elif n.created_at %}
+                        {% set label = format_ph(n.created_at, '%b %d, %Y') %}
+                    {% endif %}
+                {% elif n.created_at %}
+                    {% set label = format_ph(n.created_at, '%b %d, %Y') %}
+                {% endif %}
+
+                {% if label != ns.prev_label %}
+                <h2 class="notif-day-label">{{ label }}</h2>
+                {% set ns.prev_label = label %}
+                {% endif %}
+
+            <article class="notif-item {% if not n.is_read %}is-unread{% endif %}">
+                <div class="notif-body">
+                    <div class="notif-title-row">
+                        {% if not n.is_read %}<span class="notif-dot" aria-label="Unread"></span>{% endif %}
+                        <span class="notif-title">{{ n.title }}</span>
                     </div>
-                </li>
-                {% endfor %}
-            </ul>
+                    {% if n.body %}
+                    <p class="notif-text">{{ n.body }}</p>
+                    {% endif %}
+                    <time class="notif-time">{{ format_ph(n.created_at) }}</time>
+                </div>
+                {% if n.link %}
+                <form method="POST" action="{{ url_for('public.resident_notification_read', nid=n.id) }}" class="notif-action">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-secondary">Open</button>
+                </form>
+                {% endif %}
+            </article>
+            {% endfor %}
         </div>
         {% else %}
-        <div class="card empty-card">
-            <p class="text-center"><i class="fa-solid fa-bell-slash"></i> No notifications yet.</p>
+        <div class="empty-state">
+            <p>No notifications yet. You’ll see updates here when staff acts on your complaints.</p>
+            <a href="{{ url_for('public.submit_complaint') }}" class="btn btn-primary">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i> Submit a Complaint
+            </a>
         </div>
         {% endif %}
     </div>

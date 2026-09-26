@@ -1,171 +1,145 @@
 {% extends "base.html" %}
 {% block title %}Dashboard — Admin{% endblock %}
 
-{% block extra_css %}
-<style>
-.chart-wrap {
-    position: relative;
-    width: 100%;
-    max-width: 420px;
-    margin: 0 auto;
-    height: 260px;
-}
-.chart-wrap.tall { height: 280px; max-width: 100%; }
-@media (max-width: 480px) {
-    .chart-wrap { height: 220px; }
-    .chart-wrap.tall { height: 240px; }
-}
-.stats-summary {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    justify-content: center;
-    margin-top: 1rem;
-}
-.stats-summary .badge { font-size: 0.78rem; }
-.dash-charts { margin-bottom: 0; }
-</style>
-{% endblock %}
-
 {% block content %}
 <section class="admin-section">
     <div class="container">
-        <div class="stats-grid" style="margin-bottom:1.25rem;">
-            <div class="stat-card">
-                <div class="stat-value">{{ resolution_rate or 0 }}%</div>
-                <div class="stat-label">Resolution rate</div>
-            </div>
-            <div class="stat-card stat-progress">
-                <div class="stat-value">{{ overdue_count or 0 }}</div>
-                <div class="stat-label">Overdue</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">{% if avg_rating %}{{ avg_rating }}★{% else %}—{% endif %}</div>
-                <div class="stat-label">Avg rating {% if feedback_n %}({{ feedback_n }}){% endif %}</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">{{ unread_total or 0 }}</div>
-                <div class="stat-label">Unread msgs</div>
-            </div>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;">
-            <a href="{{ url_for('api.admin_map') }}" class="btn btn-sm btn-outline"><i class="fa-solid fa-map"></i> Map</a>
-            <a href="{{ url_for('api.admin_reports') }}" class="btn btn-sm btn-outline"><i class="fa-solid fa-chart-line"></i> Reports</a>
-            <a href="{{ url_for('api.admin_export_csv') }}" class="btn btn-sm btn-outline"><i class="fa-solid fa-file-csv"></i> CSV</a>
-            <a href="{{ url_for('api.admin_export_xlsx') }}" class="btn btn-sm btn-outline"><i class="fa-solid fa-file-excel"></i> Excel</a>
-        </div>
-        <div class="dash-grid dash-charts">
-            <!-- Status chart -->
-            <div class="card dash-panel">
-                <div class="dash-panel-header">
-                    <h2><i class="fa-solid fa-chart-pie"></i> Cases by Status</h2>
-                </div>
-                <div class="chart-wrap">
-                    <canvas id="statusChart" aria-label="Cases by status chart" role="img"></canvas>
-                </div>
-                <div class="stats-summary" id="statusSummary">
-                    {% for s in statuses %}
-                    <a href="{{ url_for('admin.admin_dashboard', status=s) }}" class="badge badge-status-{{ s|lower|replace(' ', '-') }}">
-                        {{ s }}: {{ stats.get(s, 0) }}
-                    </a>
-                    {% endfor %}
-                </div>
-            </div>
+        <header class="admin-dash-header">
+            <p class="welcome-line">
+                {% set hour = now_ph().hour if now_ph is defined else 12 %}
+                {% if hour < 12 %}Good morning{% elif hour < 18 %}Good afternoon{% else %}Good evening{% endif %}{% if staff_name %}, {{ staff_name.split()[0] }}{% endif %}
+            </p>
+            <p class="page-subhead">Here’s what needs attention today.</p>
+        </header>
 
-            <!-- Category chart -->
-            <div class="card dash-panel">
-                <div class="dash-panel-header">
-                    <h2><i class="fa-solid fa-chart-simple"></i> Open Cases by Category</h2>
-                </div>
-                {% if category_counts %}
-                <div class="chart-wrap tall">
-                    <canvas id="categoryChart" aria-label="Open cases by category chart" role="img"></canvas>
-                </div>
-                {% else %}
-                <div class="dash-empty">
-                    <i class="fa-solid fa-inbox"></i>
-                    No open cases to break down yet.
-                </div>
-                {% endif %}
-            </div>
+        <!-- Compact status metrics -->
+        <div class="summary-row admin-metrics" aria-label="Case counts by status">
+            <a href="{{ url_for('admin.admin_dashboard', status='Submitted') }}" class="summary-item summary-link">
+                <span class="summary-value">{{ stats.get('Submitted', 0) }}</span>
+                <span class="summary-label">New</span>
+            </a>
+            <a href="{{ url_for('admin.admin_dashboard', status='Verified') }}" class="summary-item summary-link">
+                <span class="summary-value">{{ stats.get('Verified', 0) }}</span>
+                <span class="summary-label">Under review</span>
+            </a>
+            <a href="{{ url_for('admin.admin_dashboard', status='In Progress') }}" class="summary-item summary-link">
+                <span class="summary-value">{{ stats.get('In Progress', 0) }}</span>
+                <span class="summary-label">In progress</span>
+            </a>
+            <a href="{{ url_for('admin.admin_dashboard', status='Resolved') }}" class="summary-item summary-link">
+                <span class="summary-value">{{ stats.get('Resolved', 0) }}</span>
+                <span class="summary-label">Resolved</span>
+            </a>
         </div>
 
-        
-        {% if monthly %}
-        <div class="card dash-panel" style="margin-top:1.25rem;">
+        <div class="admin-kpi-row">
+            <span class="kpi-chip">{% if resolution_rate is not none %}{{ resolution_rate }}% resolution{% else %}—{% endif %}</span>
+            {% if overdue_count %}<span class="kpi-chip kpi-warn">{{ overdue_count }} overdue</span>{% endif %}
+            {% if unread_total %}<span class="kpi-chip kpi-warn">{{ unread_total }} unread msgs</span>{% endif %}
+            {% if avg_rating %}<span class="kpi-chip">{{ avg_rating }}★ avg{% if feedback_n %} ({{ feedback_n }}){% endif %}</span>{% endif %}
+        </div>
+
+        <!-- Needs attention — dominant -->
+        <div class="card dash-panel dash-panel-primary">
             <div class="dash-panel-header">
-                <h2><i class="fa-solid fa-calendar"></i> Monthly volume (12 mo)</h2>
+                <h2>Needs attention</h2>
+                <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-sm btn-secondary">All cases</a>
             </div>
-            <div class="chart-wrap tall">
-                <canvas id="monthlyChart" aria-label="Monthly complaints chart" role="img"></canvas>
-            </div>
-        </div>
-        {% endif %}
-
-<div class="dash-grid" style="margin-top:1.25rem;">
-            <!-- Needs attention -->
-            <div class="card dash-panel">
-                <div class="dash-panel-header">
-                    <h2><i class="fa-solid fa-triangle-exclamation"></i> Needs Attention</h2>
-                    <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
-                    {% if overdue_count %}
-                    <span class="badge badge-urgent" title="Past due date">
-                        <i class="fa-solid fa-clock"></i> {{ overdue_count }} overdue
-                    </span>
-                    {% endif %}
-                    {% if unread_total %}
-                    <span class="badge badge-urgent" title="Unread resident messages">
-                        <i class="fa-solid fa-comment-dots"></i> {{ unread_total }} unread
-                    </span>
-                    {% endif %}
-                    </div>
-                </div>
-                {% if needs_attention %}
-                <ul class="attention-list">
-                    {% for c in needs_attention %}
-                    <li>
-                        <a href="{{ url_for('admin.admin_complaint', complaint_id=c.id) }}" class="attention-item">
-                            <span class="attention-main">
-                                <span class="attention-tracking">{{ c.tracking_number }}</span>
-                                <span class="attention-cat">{{ c.category }} · {{ c.location }}</span>
-                            </span>
-                            <span class="attention-badges">
-                                {% if c.priority == 'Urgent' %}
-                                <span class="badge badge-urgent">Urgent</span>
-                                {% endif %}
-                                <span class="badge badge-status-{{ c.status|lower|replace(' ', '-') }}">{{ c.status }}</span>
-                            </span>
-                        </a>
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <div class="dash-empty">
-                    <i class="fa-solid fa-circle-check"></i>
-                    Nothing urgent right now — all caught up.
-                </div>
-                {% endif %}
-            </div>
-
-            {% if overdue_cases %}
-            <div class="card dash-panel">
-                <div class="dash-panel-header">
-                    <h2><i class="fa-solid fa-clock"></i> Overdue Cases</h2>
-                </div>
-                <ul class="dash-list">
-                    {% for c in overdue_cases %}
-                    <li>
-                        <a href="{{ url_for('admin.admin_complaint', complaint_id=c.id) }}">
-                            <strong>{{ c.tracking_number }}</strong>
-                            <span>{{ c.category }} · {{ c.status }}</span>
-                            <span class="badge badge-urgent">Due {{ format_ph(c.due_at, '%b %d') }}</span>
-                        </a>
-                    </li>
-                    {% endfor %}
-                </ul>
+            {% if needs_attention %}
+            <ul class="attention-list">
+                {% for c in needs_attention %}
+                <li>
+                    <a href="{{ url_for('admin.admin_complaint', complaint_id=c.id) }}" class="attention-item">
+                        <span class="attention-main">
+                            <span class="attention-tracking">{{ c.tracking_number }}</span>
+                            <span class="attention-cat">{{ c.category }} · {{ c.location }}</span>
+                        </span>
+                        <span class="attention-badges">
+                            {% if c.priority == 'Urgent' %}
+                            <span class="badge badge-urgent">Urgent</span>
+                            {% endif %}
+                            <span class="status-pill status-{{ c.status|lower|replace(' ', '-') }}">{{ c.status }}</span>
+                            <span class="btn btn-sm btn-secondary">Open</span>
+                        </span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div class="empty-state dash-empty-inline">
+                <p>Everything is currently up to date.</p>
             </div>
             {% endif %}
         </div>
+
+        {% if overdue_cases %}
+        <div class="card dash-panel" style="margin-top: var(--space-4);">
+            <div class="dash-panel-header">
+                <h2>Overdue</h2>
+            </div>
+            <ul class="attention-list">
+                {% for c in overdue_cases %}
+                <li>
+                    <a href="{{ url_for('admin.admin_complaint', complaint_id=c.id) }}" class="attention-item">
+                        <span class="attention-main">
+                            <span class="attention-tracking">{{ c.tracking_number }}</span>
+                            <span class="attention-cat">{{ c.category }} · {{ c.status }}</span>
+                        </span>
+                        <span class="attention-badges">
+                            <span class="badge badge-urgent">Due {{ format_ph(c.due_at, '%b %d') }}</span>
+                        </span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <!-- Charts secondary -->
+        <details class="dash-charts-details" style="margin-top: var(--space-5);">
+            <summary class="dash-charts-summary">Charts &amp; trends</summary>
+            <div class="dash-grid dash-charts" style="margin-top: var(--space-4);">
+                <div class="card dash-panel">
+                    <div class="dash-panel-header">
+                        <h2>Cases by status</h2>
+                    </div>
+                    <div class="chart-wrap">
+                        <canvas id="statusChart" aria-label="Cases by status chart" role="img"></canvas>
+                    </div>
+                    <div class="stats-summary" id="statusSummary">
+                        {% for s in statuses %}
+                        <a href="{{ url_for('admin.admin_dashboard', status=s) }}" class="badge badge-status-{{ s|lower|replace(' ', '-') }}">
+                            {{ s }}: {{ stats.get(s, 0) }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card dash-panel">
+                    <div class="dash-panel-header">
+                        <h2>Open by category</h2>
+                    </div>
+                    {% if category_counts %}
+                    <div class="chart-wrap tall">
+                        <canvas id="categoryChart" aria-label="Open cases by category chart" role="img"></canvas>
+                    </div>
+                    {% else %}
+                    <div class="empty-state dash-empty-inline">
+                        <p>No open cases to break down yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% if monthly %}
+            <div class="card dash-panel" style="margin-top: var(--space-4);">
+                <div class="dash-panel-header">
+                    <h2>Monthly volume (12 mo)</h2>
+                </div>
+                <div class="chart-wrap tall">
+                    <canvas id="monthlyChart" aria-label="Monthly complaints chart" role="img"></canvas>
+                </div>
+            </div>
+            {% endif %}
+        </details>
     </div>
 </section>
 {% endblock %}

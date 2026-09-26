@@ -5,117 +5,269 @@
 {% block content %}
 <section class="page-header">
     <div class="container">
-        <h1><i class="fa-solid fa-pen-to-square"></i> Submit a Complaint</h1>
-        <p>Report an issue with a photo and your current location. You will receive a tracking number.</p>
+        <h1>Submit a Complaint</h1>
+        <p>A few short steps. You will get a tracking number when you finish.</p>
     </div>
 </section>
 
 <section class="form-section">
     <div class="container">
-        <div class="card form-card">
+        <div class="card form-card submit-wizard">
+            <!-- Step indicator -->
+            <div class="wizard-steps" role="navigation" aria-label="Form steps">
+                <div class="wizard-step is-active" data-step-indicator="1">
+                    <span class="wizard-num">1</span>
+                    <span class="wizard-label">Details</span>
+                </div>
+                <div class="wizard-step" data-step-indicator="2">
+                    <span class="wizard-num">2</span>
+                    <span class="wizard-label">Location</span>
+                </div>
+                <div class="wizard-step" data-step-indicator="3">
+                    <span class="wizard-num">3</span>
+                    <span class="wizard-label">Photo</span>
+                </div>
+                <div class="wizard-step" data-step-indicator="4">
+                    <span class="wizard-num">4</span>
+                    <span class="wizard-label">Review</span>
+                </div>
+            </div>
+            <progress class="wizard-progress" id="wizardProgress" max="4" value="1" aria-label="Form progress"></progress>
+
             <form id="complaintForm" method="POST" action="{{ url_for('public.submit_complaint') }}"
                   enctype="multipart/form-data" class="complaint-form" novalidate>
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="latitude" id="latitude" value="">
                 <input type="hidden" name="longitude" id="longitude" value="">
 
-                <div class="form-group">
-                    <label for="category">Category <span class="required">*</span></label>
-                    <select id="category" name="category" required>
-                        <option value="">Select category...</option>
-                        {% for cat in categories %}
-                        <option value="{{ cat }}">{{ cat }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="location">Location / Barangay Details <span class="required">*</span></label>
-                    <input type="text" id="location" name="location"
-                           placeholder="e.g., Brgy. San Jose, near plaza / Purok 3"
-                           required maxlength="255" autocomplete="street-address">
-                </div>
-
-                <div class="form-group">
-                    <label for="description">Description <span class="required">*</span></label>
-                    <textarea id="description" name="description" rows="5"
-                              placeholder="Describe the issue clearly..." required maxlength="3000"></textarea>
-                </div>
-
-                <div class="form-divider" role="separator" aria-label="Optional details below">
-                    <span>Optional details — helps staff respond faster</span>
-                </div>
-
-                <!-- Location map -->
-                <div class="form-group">
-                    <label><i class="fa-solid fa-location-crosshairs"></i> Pin Your Current Location</label>
-                    <div class="location-panel">
-                        <button type="button" class="btn btn-outline btn-block" id="btnLocate">
-                            <i class="fa-solid fa-location-dot"></i>
-                            <span id="locateBtnText">Allow access to my location</span>
-                        </button>
-                        <p class="location-hint" id="locationHint">
-                            We use your location only to pin this report on the map. Works fully when the site is served over HTTPS. You can still submit without it.
-                        </p>
-                        <div id="mapContainer" class="map-container hidden" role="group" aria-label="Map showing your pinned location">
-                            <div id="map" class="map-el" role="img" aria-label="Map preview of the pinned complaint location"></div>
-                            <p class="map-coords" id="mapCoords"></p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-row">
+                <!-- Step 1: Complaint details -->
+                <div class="wizard-panel is-active" data-step="1">
+                    <h2 class="wizard-panel-title">What happened?</h2>
                     <div class="form-group">
-                        <label for="priority">Priority</label>
-                        <select id="priority" name="priority">
-                            {% for p in priorities %}
-                            <option value="{{ p }}" {% if p == 'Normal' %}selected{% endif %}>{{ p }}</option>
+                        <label for="category">Category <span class="required">*</span></label>
+                        <select id="category" name="category" required>
+                            <option value="">Select category…</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat }}">{{ cat }}</option>
                             {% endfor %}
                         </select>
+                        <p class="field-hint">Choose the option that best matches the issue.</p>
                     </div>
                     <div class="form-group">
-                        <label for="resident_name">Your Name (optional)</label>
-                        <input type="text" id="resident_name" name="resident_name"
-                               maxlength="150" autocomplete="name" placeholder="For follow-up">
+                        <label for="description">What happened? <span class="required">*</span></label>
+                        <textarea id="description" name="description" rows="5"
+                                  placeholder="Describe the issue clearly…" required maxlength="3000"></textarea>
+                        <p class="field-hint">Include enough detail for staff to understand and act.</p>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="priority">Priority</label>
+                            <select id="priority" name="priority">
+                                {% for p in priorities %}
+                                <option value="{{ p }}" {% if p == 'Normal' %}selected{% endif %}>{{ p }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="resident_name">Your name <span class="optional-tag">optional</span></label>
+                            <input type="text" id="resident_name" name="resident_name"
+                                   maxlength="150" autocomplete="name" placeholder="For follow-up">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="resident_contact">Contact <span class="optional-tag">optional</span></label>
+                        <input type="text" id="resident_contact" name="resident_contact"
+                               maxlength="100" placeholder="Phone or email" autocomplete="tel">
+                    </div>
+                    <div class="wizard-actions">
+                        <button type="button" class="btn btn-primary" data-wizard-next>Continue</button>
+                        <a href="{{ url_for('public.index') }}" class="btn btn-ghost">Cancel</a>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="resident_contact">Contact (optional)</label>
-                    <input type="text" id="resident_contact" name="resident_contact"
-                           maxlength="100" placeholder="Phone or email" autocomplete="tel">
-                </div>
-
-                <div class="form-group">
-                    <label for="photo">Photo of the Issue</label>
-                    <div class="file-upload-area" id="fileUploadArea">
-                        <input type="file" id="photo" name="photo" accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
-                               capture="environment">
-                        <div class="file-upload-placeholder" id="filePlaceholder">
-                            <i class="fa-solid fa-camera"></i>
-                            <span>Tap to take photo or choose image</span>
-                            <small>PNG, JPG, GIF, WEBP · Max 5 MB</small>
-                        </div>
-                        <div class="file-preview hidden" id="filePreview">
-                            <img id="previewImg" alt="Preview">
-                            <button type="button" class="btn btn-sm btn-outline" id="removePhoto">
-                                <i class="fa-solid fa-xmark"></i> Remove
+                <!-- Step 2: Location -->
+                <div class="wizard-panel" data-step="2" hidden>
+                    <h2 class="wizard-panel-title">Where is it?</h2>
+                    <div class="form-group">
+                        <label for="location">Location / barangay details <span class="required">*</span></label>
+                        <input type="text" id="location" name="location"
+                               placeholder="e.g. Brgy. San Jose, near plaza / Purok 3"
+                               required maxlength="255" autocomplete="street-address">
+                        <p class="field-hint">Street, purok, or landmarks help staff find the site.</p>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i> Pin your location <span class="optional-tag">optional</span></label>
+                        <div class="location-panel">
+                            <button type="button" class="btn btn-outline btn-block" id="btnLocate">
+                                <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+                                <span id="locateBtnText">Allow access to my location</span>
                             </button>
+                            <p class="location-hint" id="locationHint">
+                                Used only to pin this report on the map. Works over HTTPS. You can submit without it.
+                            </p>
+                            <div id="mapContainer" class="map-container hidden" role="group" aria-label="Map showing your pinned location">
+                                <div id="map" class="map-el" role="img" aria-label="Map preview of the pinned complaint location"></div>
+                                <p class="map-coords" id="mapCoords"></p>
+                            </div>
                         </div>
+                    </div>
+                    <div class="wizard-actions">
+                        <button type="button" class="btn btn-primary" data-wizard-next>Continue</button>
+                        <button type="button" class="btn btn-ghost" data-wizard-back>Back</button>
                     </div>
                 </div>
 
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
-                        <span class="btn-text"><i class="fa-solid fa-paper-plane"></i> Submit Complaint</span>
-                        <span class="btn-loader hidden">
-                            <span class="mini-spinner white"></span> Submitting...
-                        </span>
-                    </button>
-                    <a href="{{ url_for('public.index') }}" class="btn btn-outline">Cancel</a>
+                <!-- Step 3: Photo -->
+                <div class="wizard-panel" data-step="3" hidden>
+                    <h2 class="wizard-panel-title">Add a photo</h2>
+                    <p class="wizard-panel-hint">Optional — a photo helps staff assess the issue faster.</p>
+                    <div class="form-group">
+                        <label for="photo">Photo of the issue</label>
+                        <div class="file-upload-area" id="fileUploadArea">
+                            <input type="file" id="photo" name="photo" accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+                                   capture="environment">
+                            <div class="file-upload-placeholder" id="filePlaceholder">
+                                <i class="fa-solid fa-camera" aria-hidden="true"></i>
+                                <span>Tap to take photo or choose image</span>
+                                <small>PNG, JPG, GIF, WEBP · Max 5 MB</small>
+                            </div>
+                            <div class="file-preview hidden" id="filePreview">
+                                <img id="previewImg" alt="Preview">
+                                <button type="button" class="btn btn-sm btn-outline" id="removePhoto">
+                                    <i class="fa-solid fa-xmark" aria-hidden="true"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="wizard-actions">
+                        <button type="button" class="btn btn-primary" data-wizard-next>Continue</button>
+                        <button type="button" class="btn btn-ghost" data-wizard-back>Back</button>
+                    </div>
+                </div>
+
+                <!-- Step 4: Review & submit -->
+                <div class="wizard-panel" data-step="4" hidden>
+                    <h2 class="wizard-panel-title">Review &amp; submit</h2>
+                    <p class="wizard-panel-hint">Check the details below, then submit.</p>
+                    <dl class="review-summary">
+                        <div class="review-row">
+                            <dt>Category</dt>
+                            <dd id="reviewCategory">—</dd>
+                        </div>
+                        <div class="review-row">
+                            <dt>What happened</dt>
+                            <dd id="reviewDescription">—</dd>
+                        </div>
+                        <div class="review-row">
+                            <dt>Location</dt>
+                            <dd id="reviewLocation">—</dd>
+                        </div>
+                        <div class="review-row">
+                            <dt>Priority</dt>
+                            <dd id="reviewPriority">—</dd>
+                        </div>
+                        <div class="review-row">
+                            <dt>Photo</dt>
+                            <dd id="reviewPhoto">None</dd>
+                        </div>
+                    </dl>
+                    <div class="wizard-actions">
+                        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                            <span class="btn-text"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> Submit Complaint</span>
+                            <span class="btn-loader hidden">
+                                <span class="mini-spinner white"></span> Submitting…
+                            </span>
+                        </button>
+                        <button type="button" class="btn btn-ghost" data-wizard-back>Back</button>
+                    </div>
                 </div>
             </form>
         </div>
     </div>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    var current = 1;
+    var total = 4;
+    var form = document.getElementById('complaintForm');
+    if (!form) return;
+
+    var panels = form.querySelectorAll('.wizard-panel');
+    var indicators = document.querySelectorAll('[data-step-indicator]');
+    var progress = document.getElementById('wizardProgress');
+
+    function showStep(n) {
+        current = n;
+        panels.forEach(function (p) {
+            var s = parseInt(p.getAttribute('data-step'), 10);
+            if (s === n) {
+                p.hidden = false;
+                p.classList.add('is-active');
+            } else {
+                p.hidden = true;
+                p.classList.remove('is-active');
+            }
+        });
+        indicators.forEach(function (el) {
+            var s = parseInt(el.getAttribute('data-step-indicator'), 10);
+            el.classList.toggle('is-active', s === n);
+            el.classList.toggle('is-done', s < n);
+        });
+        if (progress) progress.value = n;
+        if (n === 4) fillReview();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function validateStep(n) {
+        if (n === 1) {
+            var cat = document.getElementById('category');
+            var desc = document.getElementById('description');
+            if (!cat.value) { cat.focus(); cat.reportValidity(); return false; }
+            if (!desc.value.trim()) { desc.focus(); desc.reportValidity(); return false; }
+        }
+        if (n === 2) {
+            var loc = document.getElementById('location');
+            if (!loc.value.trim()) { loc.focus(); loc.reportValidity(); return false; }
+        }
+        return true;
+    }
+
+    function fillReview() {
+        var cat = document.getElementById('category');
+        var desc = document.getElementById('description');
+        var loc = document.getElementById('location');
+        var pri = document.getElementById('priority');
+        var photo = document.getElementById('photo');
+        document.getElementById('reviewCategory').textContent = (cat && cat.options[cat.selectedIndex]) ? cat.options[cat.selectedIndex].text : '—';
+        document.getElementById('reviewDescription').textContent = (desc && desc.value.trim()) || '—';
+        document.getElementById('reviewLocation').textContent = (loc && loc.value.trim()) || '—';
+        document.getElementById('reviewPriority').textContent = (pri && pri.value) || '—';
+        var hasPhoto = photo && photo.files && photo.files.length > 0;
+        document.getElementById('reviewPhoto').textContent = hasPhoto ? photo.files[0].name : 'None';
+    }
+
+    form.querySelectorAll('[data-wizard-next]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            if (!validateStep(current)) return;
+            if (current < total) showStep(current + 1);
+        });
+    });
+    form.querySelectorAll('[data-wizard-back]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            if (current > 1) showStep(current - 1);
+        });
+    });
+
+    // Prevent Enter from submitting early (except on last step)
+    form.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA' && current < total) {
+            e.preventDefault();
+            if (validateStep(current)) showStep(current + 1);
+        }
+    });
+})();
+</script>
 {% endblock %}

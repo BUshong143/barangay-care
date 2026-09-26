@@ -3,111 +3,101 @@
 {% block body_class %}has-bottom-nav{% endblock %}
 
 {% block content %}
-<section class="page-header">
+<section class="page-header resident-dash-header">
     <div class="container">
-        <h1><i class="fa-solid fa-folder-open"></i> My Dashboard</h1>
-        <p>Hello, {{ resident_name }}. Track your cases, messages, and notifications.</p>
+        <p class="welcome-line">
+            {% set hour = now_ph().hour if now_ph is defined else 12 %}
+            {% if hour < 12 %}Good morning{% elif hour < 18 %}Good afternoon{% else %}Good evening{% endif %},
+            {{ (resident_name or 'Resident').split()[0] }}
+        </p>
+        <p class="page-subhead">Here is what is happening with your complaints.</p>
+        <div class="page-primary-action">
+            <a href="{{ url_for('public.submit_complaint') }}" class="btn btn-primary">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i> Submit a Complaint
+            </a>
+        </div>
     </div>
 </section>
 
 <section class="form-section">
     <div class="container">
-        <!-- Stats -->
-        <div class="stats-grid" style="margin-bottom:1.5rem;">
-            <div class="stat-card">
-                <div class="stat-value">{{ stats.total }}</div>
-                <div class="stat-label">Total</div>
+        <!-- Compact summary -->
+        <div class="summary-row" aria-label="Complaint summary">
+            <div class="summary-item">
+                <span class="summary-value">{{ stats.open|default(0) }}</span>
+                <span class="summary-label">Active</span>
             </div>
-            <div class="stat-card stat-progress">
-                <div class="stat-value">{{ stats.open }}</div>
-                <div class="stat-label">Open</div>
+            <div class="summary-item">
+                <span class="summary-value">{{ stats.resolved|default(0) }}</span>
+                <span class="summary-label">Resolved</span>
             </div>
-            <div class="stat-card stat-resolved">
-                <div class="stat-value">{{ stats.resolved }}</div>
-                <div class="stat-label">Resolved</div>
+            <div class="summary-item">
+                <span class="summary-value">{{ unread_notifications|default(0) }}</span>
+                <span class="summary-label">Unread alerts</span>
             </div>
-            <div class="stat-card stat-confirmed">
-                <div class="stat-value">{{ stats.confirmed }}</div>
-                <div class="stat-label">Confirmed</div>
+            <div class="summary-item summary-item-muted">
+                <span class="summary-value">{{ stats.total|default(0) }}</span>
+                <span class="summary-label">Total</span>
             </div>
         </div>
 
-        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1.25rem;align-items:center;">
-            <a href="{{ url_for('public.submit_complaint') }}" class="btn btn-primary">
-                <i class="fa-solid fa-pen-to-square"></i> Submit new
-            </a>
-            <a href="{{ url_for('public.resident_notifications') }}" class="btn btn-outline">
-                <i class="fa-solid fa-bell"></i> Notifications
-                {% if unread_notifications %}<span class="badge badge-urgent">{{ unread_notifications }}</span>{% endif %}
-            </a>
-            <a href="{{ url_for('public.resident_logout') }}" class="btn btn-outline">
-                <i class="fa-solid fa-right-from-bracket"></i> Log out
-            </a>
-        </div>
-
-        <!-- Status filters -->
-        <div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:1rem;">
-            <a href="{{ url_for('public.resident_dashboard') }}"
-               class="badge {% if not current_status %}badge-status-verified{% else %}badge-status-submitted{% endif %}">
-                All
-            </a>
-            {% for s in statuses %}
-            <a href="{{ url_for('public.resident_dashboard', status=s) }}"
-               class="badge badge-status-{{ s|lower|replace(' ', '-') }} {% if current_status == s %}badge-status-verified{% endif %}">
-                {{ s }}
-            </a>
-            {% endfor %}
-        </div>
-
-        {% if notifications %}
-        <div class="card" style="margin-bottom:1.25rem;">
-            <h3 style="font-size:1rem;margin-bottom:0.75rem;"><i class="fa-solid fa-bell"></i> Recent notifications</h3>
-            <ul style="list-style:none;padding:0;margin:0;">
-                {% for n in notifications[:5] %}
-                <li style="padding:0.55rem 0;border-bottom:1px solid var(--slate-100);font-size:0.9rem;">
-                    {% if not n.is_read %}<strong>{% endif %}
-                    {{ n.title }}
-                    {% if not n.is_read %}</strong>{% endif %}
-                    <div style="color:var(--slate-500);font-size:0.8rem;">{{ format_ph(n.created_at) }}</div>
-                </li>
+        <div class="dash-toolbar">
+            <div class="filter-pills" role="navigation" aria-label="Filter by status">
+                <a href="{{ url_for('public.resident_dashboard') }}"
+                   class="filter-pill {% if not current_status %}is-active{% endif %}">All</a>
+                {% for s in statuses %}
+                <a href="{{ url_for('public.resident_dashboard', status=s) }}"
+                   class="filter-pill {% if current_status == s %}is-active{% endif %}">{{ s }}</a>
                 {% endfor %}
-            </ul>
-            <a href="{{ url_for('public.resident_notifications') }}" style="font-size:0.85rem;">View all</a>
+            </div>
+            <div class="dash-toolbar-actions">
+                <a href="{{ url_for('public.resident_notifications') }}" class="btn btn-ghost btn-sm">
+                    <i class="fa-solid fa-bell" aria-hidden="true"></i> Notifications
+                    {% if unread_notifications %}<span class="nav-badge">{{ unread_notifications }}</span>{% endif %}
+                </a>
+                <a href="{{ url_for('public.resident_logout') }}" class="btn btn-ghost btn-sm">
+                    <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> Log out
+                </a>
+            </div>
         </div>
-        {% endif %}
 
         {% if complaints %}
-        <div class="records-grid">
+        <ul class="complaint-list" aria-label="Your complaints">
             {% for c in complaints %}
-            <a class="record-card" href="{{ url_for('public.track', tracking=c.tracking_number) }}" style="text-decoration:none;color:inherit;">
-                <div class="record-card-top">
-                    <div class="record-icon"><i class="fa-solid fa-clipboard-list"></i></div>
-                    <span class="badge badge-status-{{ (c.status or '')|lower|replace(' ', '-') }}">{{ c.status }}</span>
-                    {% if c.unread_msgs %}
-                    <span class="badge badge-urgent"><i class="fa-solid fa-comment"></i> {{ c.unread_msgs }}</span>
-                    {% endif %}
+            <li class="complaint-list-item">
+                <div class="cli-main">
+                    <div class="cli-title-row">
+                        <span class="cli-ref">{{ c.tracking_number }}</span>
+                        <span class="status-pill status-{{ (c.status or '')|lower|replace(' ', '-') }}">{{ c.status }}</span>
+                        {% if c.unread_msgs %}
+                        <span class="cli-msg-badge" title="Unread messages">
+                            <i class="fa-solid fa-comment" aria-hidden="true"></i> {{ c.unread_msgs }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    <p class="cli-category">{{ c.category }}</p>
+                    <p class="cli-meta">
+                        <span><i class="fa-solid fa-location-dot" aria-hidden="true"></i> {{ c.location }}</span>
+                        <span><i class="fa-regular fa-calendar" aria-hidden="true"></i> {{ format_ph(c.created_at) }}</span>
+                    </p>
                 </div>
-                <div class="record-tracking">{{ c.tracking_number }}</div>
-                <div class="record-category">{{ c.category }}</div>
-                <div class="record-location"><i class="fa-solid fa-location-dot"></i> {{ c.location }}</div>
-                <div class="record-card-bottom">
-                    <span class="badge badge-{{ (c.priority or 'normal')|lower }}">{{ c.priority }}</span>
-                    <span class="record-date">{{ format_ph(c.created_at) }}</span>
-                </div>
-            </a>
+                <a href="{{ url_for('public.track', tracking=c.tracking_number) }}" class="btn btn-secondary btn-sm">
+                    View
+                </a>
+            </li>
             {% endfor %}
-        </div>
+        </ul>
         {% else %}
-        <div class="card empty-card">
-            <p class="text-center">
-                <i class="fa-solid fa-inbox"></i>
-                {% if current_status %}
-                No complaints with status {{ current_status }}.
-                {% else %}
-                You have no complaints yet.
-                <a href="{{ url_for('public.submit_complaint') }}">Submit one</a>.
-                {% endif %}
-            </p>
+        <div class="empty-state">
+            {% if current_status %}
+            <p>No complaints with status <strong>{{ current_status }}</strong>.</p>
+            <a href="{{ url_for('public.resident_dashboard') }}" class="btn btn-secondary">Show all</a>
+            {% else %}
+            <p>You haven’t submitted a complaint yet.</p>
+            <a href="{{ url_for('public.submit_complaint') }}" class="btn btn-primary">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i> Submit a Complaint
+            </a>
+            {% endif %}
         </div>
         {% endif %}
     </div>

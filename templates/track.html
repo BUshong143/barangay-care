@@ -5,8 +5,8 @@
 {% block content %}
 <section class="page-header">
     <div class="container">
-        <h1><i class="fa-solid fa-magnifying-glass"></i> Track Your Complaint</h1>
-        <p>Enter your tracking number to view status, map, photo, and message staff.</p>
+        <h1>Track your complaint</h1>
+        <p>Enter your tracking number to view status and message staff.</p>
     </div>
 </section>
 
@@ -15,14 +15,14 @@
         <div class="card form-card track-search-card">
             <form method="GET" action="{{ url_for('public.track') }}" id="trackForm" class="track-form">
                 <div class="form-group">
-                    <label for="tracking">Tracking Number</label>
+                    <label for="tracking">Tracking number</label>
                     <div class="input-with-btn">
                         <input type="text" id="tracking" name="tracking"
                                value="{{ tracking or '' }}"
                                placeholder="#2026-00001" required maxlength="50"
                                autocomplete="off">
                         <button type="submit" class="btn btn-primary" id="trackBtn">
-                            <span class="btn-text"><i class="fa-solid fa-search"></i> Search</span>
+                            <span class="btn-text"><i class="fa-solid fa-search" aria-hidden="true"></i> Search</span>
                             <span class="btn-loader hidden"><span class="mini-spinner white"></span></span>
                         </button>
                     </div>
@@ -31,11 +31,8 @@
         </div>
 
         {% if tracking and not complaint %}
-        <div class="card empty-card">
-            <p class="text-center">
-                <i class="fa-solid fa-circle-info"></i>
-                No complaint found for <strong>{{ tracking }}</strong>. Please check the number and try again.
-            </p>
+        <div class="empty-state">
+            <p>No complaint found for <strong>{{ tracking }}</strong>. Check the number and try again.</p>
         </div>
         {% endif %}
 
@@ -43,17 +40,59 @@
         <div class="card detail-card">
             <div class="detail-header">
                 <div>
-                    <h2>{{ complaint.tracking_number }}</h2>
-                    <span class="badge badge-status-{{ complaint.status|lower|replace(' ', '-') }}">
-                        {{ complaint.status }}
-                    </span>
-                    <span class="badge badge-{{ complaint.priority|lower }}">{{ complaint.priority }}</span>
+                    <h2 class="detail-tracking">{{ complaint.tracking_number }}</h2>
+                    <div class="detail-badges">
+                        <span class="status-pill status-{{ complaint.status|lower|replace(' ', '-') }}">{{ complaint.status }}</span>
+                        <span class="badge badge-{{ complaint.priority|lower }}">{{ complaint.priority }}</span>
+                    </div>
                 </div>
                 <div class="detail-meta">
-                    <i class="fa-regular fa-calendar"></i>
+                    <i class="fa-regular fa-calendar" aria-hidden="true"></i>
                     {{ format_ph(complaint.created_at) }}
                     <span class="tz-label">(PHT)</span>
                 </div>
+            </div>
+
+            <!-- Visual status timeline -->
+            <div class="status-timeline" aria-label="Complaint progress">
+                {% set steps = [
+                    ('Submitted', 'Complaint submitted'),
+                    ('Verified', 'Under review'),
+                    ('Assigned', 'Assigned to staff'),
+                    ('In Progress', 'In progress'),
+                    ('Resolved', 'Resolved'),
+                    ('Confirmed', 'Confirmed by resident')
+                ] %}
+                {% set status_order = ['Submitted', 'Verified', 'Assigned', 'In Progress', 'Resolved', 'Confirmed'] %}
+                {% set current = complaint.status %}
+                {% set current_idx = status_order.index(current) if current in status_order else 0 %}
+                <ol class="status-timeline-list">
+                    {% for code, label in steps %}
+                    {% set idx = loop.index0 %}
+                    <li class="status-timeline-item
+                        {% if idx < current_idx %}is-done
+                        {% elif idx == current_idx %}is-current
+                        {% else %}is-pending{% endif %}">
+                        <span class="st-marker" aria-hidden="true">
+                            {% if idx < current_idx %}<i class="fa-solid fa-check"></i>
+                            {% elif idx == current_idx %}<i class="fa-solid fa-circle"></i>
+                            {% else %}<i class="fa-regular fa-circle"></i>{% endif %}
+                        </span>
+                        <span class="st-content">
+                            <span class="st-label">{{ label }}</span>
+                            {% if idx == current_idx and history %}
+                                {% for h in history|reverse %}
+                                    {% if h.new_status == current and loop.first %}
+                                    <span class="st-date">{{ format_ph(h.created_at) }}{% if h.note %} — {{ h.note }}{% endif %}</span>
+                                    {% endif %}
+                                {% endfor %}
+                            {% elif idx == 0 %}
+                            <span class="st-date">{{ format_ph(complaint.created_at) }}</span>
+                            {% endif %}
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ol>
             </div>
 
             <div class="detail-body">
@@ -81,38 +120,38 @@
                 </div>
                 {% endif %}
                 <div class="detail-row">
-                    <span class="detail-label">Assigned To</span>
+                    <span class="detail-label">Assigned to</span>
                     <span class="detail-value">{{ complaint.assigned_personnel or 'Not yet assigned' }}</span>
                 </div>
                 {% if complaint.resolution_remarks %}
                 <div class="detail-row">
-                    <span class="detail-label">Resolution</span>
+                    <span class="detail-label">Resolution notes</span>
                     <span class="detail-value">{{ complaint.resolution_remarks }}</span>
                 </div>
                 {% endif %}
                 <div class="detail-row detail-row-full">
-                    <span class="detail-label"><i class="fa-solid fa-images"></i> Evidence</span>
+                    <span class="detail-label"><i class="fa-solid fa-images" aria-hidden="true"></i> Evidence</span>
                     <span class="detail-value">
-                        <div class="evidence-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.75rem;">
+                        <div class="evidence-grid">
                             {% if complaint.photo_path %}
-                            <figure style="margin:0;">
-                                <figcaption style="font-size:0.75rem;color:var(--slate-500);margin-bottom:0.35rem;">Before</figcaption>
+                            <figure class="evidence-fig">
+                                <figcaption>Before</figcaption>
                                 <a href="{{ url_for('public.serve_upload', filename=complaint.photo_path.replace('uploads/', '')) }}" target="_blank" rel="noopener" class="photo-link">
                                     <img src="{{ url_for('public.serve_upload', filename=complaint.photo_path.replace('uploads/', '')) }}" alt="Before" class="complaint-photo">
                                 </a>
                             </figure>
                             {% endif %}
                             {% if complaint.resolution_photo_path %}
-                            <figure style="margin:0;">
-                                <figcaption style="font-size:0.75rem;color:var(--slate-500);margin-bottom:0.35rem;">Resolution</figcaption>
+                            <figure class="evidence-fig">
+                                <figcaption>Resolution</figcaption>
                                 <a href="{{ url_for('public.serve_upload', filename=complaint.resolution_photo_path.replace('uploads/', '')) }}" target="_blank" rel="noopener" class="photo-link">
                                     <img src="{{ url_for('public.serve_upload', filename=complaint.resolution_photo_path.replace('uploads/', '')) }}" alt="Resolution" class="complaint-photo">
                                 </a>
                             </figure>
                             {% endif %}
                             {% if complaint.after_photo_path %}
-                            <figure style="margin:0;">
-                                <figcaption style="font-size:0.75rem;color:var(--slate-500);margin-bottom:0.35rem;">After</figcaption>
+                            <figure class="evidence-fig">
+                                <figcaption>After</figcaption>
                                 <a href="{{ url_for('public.serve_upload', filename=complaint.after_photo_path.replace('uploads/', '')) }}" target="_blank" rel="noopener" class="photo-link">
                                     <img src="{{ url_for('public.serve_upload', filename=complaint.after_photo_path.replace('uploads/', '')) }}" alt="After" class="complaint-photo">
                                 </a>
@@ -126,29 +165,12 @@
                 </div>
             </div>
 
-            <div class="timeline">
-                <h3><i class="fa-solid fa-timeline"></i> Progress</h3>
-                <ul class="timeline-list">
-                    {% set steps = ['Submitted', 'Verified', 'Assigned', 'In Progress', 'Resolved', 'Confirmed'] %}
-                    {% set current = complaint.status %}
-                    {% for step in steps %}
-                    <li class="timeline-item
-                        {% if step == current %}active
-                        {% elif steps.index(step) < steps.index(current) %}done
-                        {% endif %}">
-                        <span class="timeline-dot"></span>
-                        <span class="timeline-label">{{ step }}</span>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </div>
-
             {% if history %}
-            <div class="timeline" style="margin-top:1.25rem;">
-                <h3><i class="fa-solid fa-clock-rotate-left"></i> Detailed timeline</h3>
-                <ul style="list-style:none;padding:0;margin:0.5rem 0 0;">
+            <div class="history-block">
+                <h3>Detailed updates</h3>
+                <ul class="history-list">
                     {% for h in history %}
-                    <li style="padding:0.55rem 0;border-bottom:1px solid var(--slate-100);font-size:0.9rem;">
+                    <li class="history-item">
                         <strong>
                             {% if h.old_status and h.new_status %}
                                 {{ h.old_status }} → {{ h.new_status }}
@@ -158,65 +180,25 @@
                                 Update
                             {% endif %}
                         </strong>
-                        <span style="color:var(--slate-500);"> · {{ h.changed_by_name }}</span>
-                        {% if h.note %}<div style="color:var(--slate-600);margin-top:0.15rem;">{{ h.note }}</div>{% endif %}
-                        <div style="color:var(--slate-400);font-size:0.78rem;">{{ format_ph(h.created_at) }}</div>
+                        <span class="history-by"> · {{ h.changed_by_name }}</span>
+                        {% if h.note %}<div class="history-note">{{ h.note }}</div>{% endif %}
+                        <div class="history-date">{{ format_ph(h.created_at) }}</div>
                     </li>
                     {% endfor %}
                 </ul>
             </div>
             {% endif %}
-
-            {% if complaint.status == 'Resolved' %}
-            <div class="confirm-box">
-                <p>Has this issue been fixed to your satisfaction?</p>
-                <form method="POST" action="{{ url_for('public.confirm_resolution', tracking_number=complaint.tracking_number) }}"
-                      id="confirmForm">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <div class="form-group" style="text-align:left;margin:0.75rem 0;">
-                        <label>Rate the service (optional)</label>
-                        <div style="display:flex;gap:0.35rem;flex-wrap:wrap;">
-                            {% for r in [1,2,3,4,5] %}
-                            <label style="cursor:pointer;">
-                                <input type="radio" name="rating" value="{{ r }}" style="margin-right:0.2rem;">
-                                {{ r }}★
-                            </label>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    <div class="form-group" style="text-align:left;">
-                        <label for="feedback_comment">Feedback (optional)</label>
-                        <textarea id="feedback_comment" name="feedback_comment" rows="2" maxlength="1000"
-                                  placeholder="Any comments for the barangay team?"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-success" id="confirmBtn">
-                        <span class="btn-text"><i class="fa-solid fa-thumbs-up"></i> Yes, Confirm Resolution</span>
-                        <span class="btn-loader hidden"><span class="mini-spinner white"></span> Confirming...</span>
-                    </button>
-                </form>
-            </div>
-            {% elif complaint.status == 'Confirmed' %}
-            <div class="confirm-box confirmed">
-                <p><i class="fa-solid fa-circle-check"></i> You confirmed this complaint as resolved. Thank you!</p>
-                {% if feedback %}
-                <p style="margin-top:0.5rem;">Your rating: <strong>{{ feedback.rating }}★</strong>
-                {% if feedback.comment %}<br><em>{{ feedback.comment }}</em>{% endif %}
-                </p>
-                {% endif %}
-            </div>
-            {% endif %}
         </div>
 
-        
-        <div class="card" id="pushCard" style="margin-bottom:1rem;" data-tracking="{{ complaint.tracking_number }}">
-            <h3><i class="fa-solid fa-bell"></i> Free status alerts</h3>
+        <div class="card" id="pushCard" data-tracking="{{ complaint.tracking_number }}">
+            <h3><i class="fa-solid fa-bell" aria-hidden="true"></i> Free status alerts</h3>
             <p class="field-hint">
                 Get a browser notification when staff updates this case — no account needed.
                 Keep this tracking number: <strong>{{ complaint.tracking_number }}</strong>
             </p>
-            <div style="display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;margin-top:0.5rem;">
+            <div class="push-actions">
                 <button type="button" class="btn btn-primary btn-sm" id="pushEnableBtn">
-                    <i class="fa-solid fa-bell"></i> Enable alerts
+                    <i class="fa-solid fa-bell" aria-hidden="true"></i> Enable alerts
                 </button>
                 <button type="button" class="btn btn-outline btn-sm hidden" id="pushDisableBtn">
                     Disable alerts
@@ -226,7 +208,7 @@
         </div>
 
         <div class="card messages-card">
-            <h3><i class="fa-solid fa-comments"></i> Messages with Staff</h3>
+            <h3><i class="fa-solid fa-comments" aria-hidden="true"></i> Messages with staff</h3>
             <div class="messages-thread" id="messagesThread">
                 {% if messages %}
                     {% for m in messages %}
@@ -254,11 +236,11 @@
                 <div class="form-group">
                     <label for="body">Message</label>
                     <textarea id="body" name="body" rows="3" required maxlength="1000"
-                              placeholder="Type your message to staff..."></textarea>
+                              placeholder="Type your message to staff…"></textarea>
                 </div>
                 <button type="submit" class="btn btn-primary" id="msgBtn">
-                    <span class="btn-text"><i class="fa-solid fa-paper-plane"></i> Send Message</span>
-                    <span class="btn-loader hidden"><span class="mini-spinner white"></span> Sending...</span>
+                    <span class="btn-text"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> Send Message</span>
+                    <span class="btn-loader hidden"><span class="mini-spinner white"></span> Sending…</span>
                 </button>
             </form>
         </div>

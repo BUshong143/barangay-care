@@ -3,9 +3,14 @@
 
 {% block content %}
 <section class="admin-section">
-    <div class="container admin-detail-layout">
+    <div class="container">
+        <header class="admin-dash-header">
+            <h1 class="page-title">Staff</h1>
+            <p class="page-subhead">Create and manage responder accounts.</p>
+        </header>
+        <div class="admin-detail-layout">
         <div class="card">
-            <h3><i class="fa-solid fa-user-plus"></i> Create responder / tanod account</h3>
+            <h3 class="card-section-title">Create account</h3>
             <form method="POST" class="action-form" data-loader="Creating account...">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="action" value="create">

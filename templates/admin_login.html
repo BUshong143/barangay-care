@@ -2,28 +2,26 @@
 {% block title %}Staff Login — Barangay Care{% endblock %}
 
 {% block content %}
-<section class="form-section">
+<section class="auth-section">
     <div class="container">
-        <div class="card form-card login-card">
-            <div class="login-header">
-                <i class="fa-solid fa-lock login-icon"></i>
-                <h1>Staff Login</h1>
-                <p>Authorized staff only</p>
-            </div>
-            <form method="POST" action="{{ url_for('admin.admin_login') }}" id="loginForm">
+        <div class="auth-card">
+            <header class="auth-header">
+                <h1>Staff sign in</h1>
+                <p>Authorized barangay staff only.</p>
+            </header>
+            <form method="POST" action="{{ url_for('admin.admin_login') }}" id="loginForm" class="auth-form action-form" data-loader="Signing in…">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="form-group">
                     <label for="username">Username</label>
-                    <input type="text" id="username" name="username" required autocomplete="username"
-                           maxlength="50">
+                    <input type="text" id="username" name="username" required autocomplete="username" maxlength="50">
                 </div>
                 <div class="form-group">
                     <label for="password">Password</label>
                     <input type="password" id="password" name="password" required autocomplete="current-password">
                 </div>
                 <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
-                    <span class="btn-text"><i class="fa-solid fa-right-to-bracket"></i> Sign In</span>
-                    <span class="btn-loader hidden"><span class="mini-spinner white"></span> Signing in...</span>
+                    <span class="btn-text"><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i> Sign in</span>
+                    <span class="btn-loader hidden"><span class="mini-spinner white"></span> Signing in…</span>
                 </button>
             </form>
         </div>

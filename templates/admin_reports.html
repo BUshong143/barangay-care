@@ -4,62 +4,81 @@
 {% block content %}
 <section class="admin-section">
     <div class="container">
-        <div class="card" style="margin-bottom:1.25rem;">
-            <h2><i class="fa-solid fa-chart-line"></i> Reports &amp; Exports</h2>
-            <form method="GET" class="action-form" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.75rem;margin-top:1rem;">
-                <div class="form-group">
-                    <label for="year">Year</label>
-                    <select id="year" name="year">
-                        {% for y in years %}
-                        <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="month">Month (optional)</label>
-                    <select id="month" name="month">
-                        <option value="">Full year</option>
-                        {% for m in months %}
-                        <option value="{{ m }}" {% if month == m %}selected{% endif %}>{{ m }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="form-group" style="display:flex;align-items:flex-end;">
-                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-filter"></i> Apply</button>
+        <header class="admin-dash-header">
+            <h1 class="page-title">Reports</h1>
+            <p class="page-subhead">Summary for the selected period.</p>
+        </header>
+
+        <div class="card filters-panel" style="display:block;">
+            <form method="GET" class="filters-form">
+                <div class="filters-grid">
+                    <div class="form-group">
+                        <label for="year">Year</label>
+                        <select id="year" name="year">
+                            {% for y in years %}
+                            <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="month">Month</label>
+                        <select id="month" name="month">
+                            <option value="">Full year</option>
+                            {% for m in months %}
+                            <option value="{{ m }}" {% if month == m %}selected{% endif %}>{{ m }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group filters-actions">
+                        <div class="filters-btns">
+                            <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+                        </div>
+                    </div>
                 </div>
             </form>
         </div>
 
-        <div class="stats-grid" style="margin-bottom:1.25rem;">
-            <div class="stat-card"><div class="stat-value">{{ summary.total or 0 }}</div><div class="stat-label">Total</div></div>
-            <div class="stat-card stat-progress"><div class="stat-value">{{ summary.open or 0 }}</div><div class="stat-label">Open</div></div>
-            <div class="stat-card stat-resolved"><div class="stat-value">{{ summary.resolved or 0 }}</div><div class="stat-label">Resolved</div></div>
-            <div class="stat-card stat-confirmed"><div class="stat-value">{{ summary.confirmed or 0 }}</div><div class="stat-label">Confirmed</div></div>
+        <div class="summary-row admin-metrics" aria-label="Period summary">
+            <div class="summary-item">
+                <span class="summary-value">{{ summary.total or 0 }}</span>
+                <span class="summary-label">Total</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-value">{{ summary.open or 0 }}</span>
+                <span class="summary-label">Open</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-value">{{ summary.resolved or 0 }}</span>
+                <span class="summary-label">Resolved</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-value">{{ summary.confirmed or 0 }}</span>
+                <span class="summary-label">Confirmed</span>
+            </div>
             {% if summary.avg_rating %}
-            <div class="stat-card"><div class="stat-value">{{ summary.avg_rating }}★</div><div class="stat-label">Avg rating</div></div>
+            <div class="summary-item">
+                <span class="summary-value">{{ summary.avg_rating }}★</span>
+                <span class="summary-label">Avg rating</span>
+            </div>
             {% endif %}
         </div>
 
         <div class="dash-grid">
-            <div class="card">
-                <h3>By status</h3>
-                <ul style="list-style:none;padding:0;margin:0.75rem 0 0;">
+            <div class="card dash-panel">
+                <div class="dash-panel-header"><h2>By status</h2></div>
+                <ul class="report-list">
                     {% for s in summary.by_status %}
-                    <li style="display:flex;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid var(--slate-100);">
-                        <span>{{ s.status }}</span><strong>{{ s.cnt }}</strong>
-                    </li>
+                    <li><span>{{ s.status }}</span><strong>{{ s.cnt }}</strong></li>
                     {% else %}
                     <li class="field-hint">No data for this period.</li>
                     {% endfor %}
                 </ul>
             </div>
-            <div class="card">
-                <h3>By category</h3>
-                <ul style="list-style:none;padding:0;margin:0.75rem 0 0;">
+            <div class="card dash-panel">
+                <div class="dash-panel-header"><h2>By category</h2></div>
+                <ul class="report-list">
                     {% for c in summary.by_category %}
-                    <li style="display:flex;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid var(--slate-100);">
-                        <span>{{ c.category }}</span><strong>{{ c.cnt }}</strong>
-                    </li>
+                    <li><span>{{ c.category }}</span><strong>{{ c.cnt }}</strong></li>
                     {% else %}
                     <li class="field-hint">No data for this period.</li>
                     {% endfor %}
@@ -67,22 +86,20 @@
             </div>
         </div>
 
-        <div class="card" style="margin-top:1.25rem;">
-            <h3><i class="fa-solid fa-download"></i> Download</h3>
-            <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.75rem;">
+        <div class="card dash-panel" style="margin-top: var(--space-4);">
+            <div class="dash-panel-header"><h2>Download</h2></div>
+            <div class="filters-btns">
                 <a class="btn btn-primary" href="{{ url_for('api.admin_reports_pdf', year=year, month=month or '') }}">
-                    <i class="fa-solid fa-file-pdf"></i> PDF report
+                    <i class="fa-solid fa-file-pdf" aria-hidden="true"></i> PDF report
                 </a>
-                <a class="btn btn-outline" href="{{ url_for('api.admin_export_csv', year=year, month=month or '') }}">
-                    <i class="fa-solid fa-file-csv"></i> CSV export
+                <a class="btn btn-secondary" href="{{ url_for('api.admin_export_csv', year=year, month=month or '') }}">
+                    <i class="fa-solid fa-file-csv" aria-hidden="true"></i> CSV
                 </a>
-                <a class="btn btn-outline" href="{{ url_for('api.admin_export_xlsx', year=year, month=month or '') }}">
-                    <i class="fa-solid fa-file-excel"></i> Excel export
+                <a class="btn btn-secondary" href="{{ url_for('api.admin_export_xlsx', year=year, month=month or '') }}">
+                    <i class="fa-solid fa-file-excel" aria-hidden="true"></i> Excel
                 </a>
             </div>
-            <p class="field-hint" style="margin-top:0.75rem;">
-                Exports respect the selected year/month and your role scope.
-            </p>
+            <p class="field-hint" style="margin-top: var(--space-3);">Exports use the selected year/month and your role scope.</p>
         </div>
     </div>
 </section>

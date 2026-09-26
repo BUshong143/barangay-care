@@ -7,51 +7,43 @@
     <div class="hero-content">
         <h1>Report. Track. Resolve.</h1>
         <p class="hero-subtitle">
-            Submit barangay concerns with photos, follow progress in real time,
-            and message staff directly — keeping our community safe and well-maintained.
+            Submit a concern, get a tracking number, and follow progress until it is resolved.
         </p>
         <div class="hero-actions">
             <a href="{{ url_for('public.submit_complaint') }}" class="btn btn-primary btn-lg">
-                <i class="fa-solid fa-pen-to-square"></i> Submit a Complaint
+                <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> Submit a Complaint
             </a>
             <a href="{{ url_for('public.track') }}" class="btn btn-outline btn-lg">
-                <i class="fa-solid fa-magnifying-glass"></i> Track Status
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Track Status
             </a>
         </div>
+        {% if not resident_logged_in %}
+        <p class="hero-signin">
+            Have an account?
+            <a href="{{ url_for('public.resident_login') }}">Sign in</a>
+            to see all your cases in one place.
+        </p>
+        {% endif %}
     </div>
 </section>
 
 <section class="stats-section">
     <div class="container">
-        <h2 class="section-title">Live Community Dashboard</h2>
-        <div class="stats-grid" id="statsGrid">
+        <h2 class="section-title">Community at a glance</h2>
+        <div class="stats-grid stats-grid-compact" id="statsGrid">
             <div class="stat-card">
-                <div class="stat-icon"><i class="fa-solid fa-clipboard-list"></i></div>
                 <div class="stat-value" id="stat-total">{{ public_stats.total|default(0) }}</div>
-                <div class="stat-label">Total Reports</div>
-            </div>
-            <div class="stat-card stat-submitted">
-                <div class="stat-icon"><i class="fa-solid fa-inbox"></i></div>
-                <div class="stat-value" id="stat-submitted">{{ public_stats.submitted|default(0) }}</div>
-                <div class="stat-label">Submitted</div>
+                <div class="stat-label">Total reports</div>
             </div>
             <div class="stat-card stat-progress">
-                <div class="stat-icon"><i class="fa-solid fa-spinner"></i></div>
                 <div class="stat-value" id="stat-in-progress">{{ public_stats.in_progress|default(0) }}</div>
-                <div class="stat-label">In Progress</div>
+                <div class="stat-label">In progress</div>
             </div>
             <div class="stat-card stat-resolved">
-                <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
                 <div class="stat-value" id="stat-resolved">{{ public_stats.resolved|default(0) }}</div>
                 <div class="stat-label">Resolved</div>
             </div>
-            <div class="stat-card stat-confirmed">
-                <div class="stat-icon"><i class="fa-solid fa-thumbs-up"></i></div>
-                <div class="stat-value" id="stat-confirmed">{{ public_stats.confirmed|default(0) }}</div>
-                <div class="stat-label">Confirmed</div>
-            </div>
             <div class="stat-card stat-urgent">
-                <div class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
                 <div class="stat-value" id="stat-urgent">{{ public_stats.urgent|default(0) }}</div>
                 <div class="stat-label">Urgent</div>
             </div>
@@ -61,27 +53,27 @@
 
 <section class="how-it-works">
     <div class="container">
-        <h2 class="section-title">How It Works</h2>
+        <h2 class="section-title">How it works</h2>
         <div class="steps-grid">
             <div class="step-card">
-                <div class="step-icon"><i class="fa-solid fa-camera"></i></div>
+                <div class="step-icon" aria-hidden="true"><i class="fa-solid fa-pen-to-square"></i></div>
                 <h3>1. Submit</h3>
-                <p>Describe the issue, add a photo, and get a unique tracking number.</p>
+                <p>Describe what happened, add a photo if you have one, and get a tracking number.</p>
             </div>
             <div class="step-card">
-                <div class="step-icon"><i class="fa-solid fa-clipboard-check"></i></div>
-                <h3>2. Verify</h3>
-                <p>Barangay staff review and verify the report for accuracy and urgency.</p>
+                <div class="step-icon" aria-hidden="true"><i class="fa-solid fa-clipboard-check"></i></div>
+                <h3>2. Review</h3>
+                <p>Barangay staff review the report and set the right priority.</p>
             </div>
             <div class="step-card">
-                <div class="step-icon"><i class="fa-solid fa-user-gear"></i></div>
-                <h3>3. Assign &amp; Act</h3>
-                <p>Personnel are assigned. Status moves to In Progress then Resolved.</p>
+                <div class="step-icon" aria-hidden="true"><i class="fa-solid fa-user-gear"></i></div>
+                <h3>3. Act</h3>
+                <p>Staff are assigned. Status moves from In Progress to Resolved.</p>
             </div>
             <div class="step-card">
-                <div class="step-icon"><i class="fa-solid fa-comments"></i></div>
-                <h3>4. Communicate</h3>
-                <p>Message staff anytime. Confirm when the issue is fixed.</p>
+                <div class="step-icon" aria-hidden="true"><i class="fa-solid fa-circle-check"></i></div>
+                <h3>4. Confirm</h3>
+                <p>Track updates anytime and confirm when the issue is fixed.</p>
             </div>
         </div>
     </div>
@@ -90,11 +82,12 @@
 <section class="recent-section">
     <div class="container">
         <div class="section-header">
-            <h2 class="section-title">Recent Public Records</h2>
+            <h2 class="section-title">Recent public records</h2>
         </div>
-        <div class="records-grid" id="recentBody">
+        <div class="records-grid" id="recentBody" aria-live="polite" aria-busy="true">
             <div class="loading-cell records-loading">
-                <div class="mini-spinner"></div> Loading records...
+                <div class="skeleton skeleton-card" style="width:100%;max-width:280px;margin:0 auto;" aria-hidden="true"></div>
+                <span class="sr-only">Loading records</span>
             </div>
         </div>
     </div>

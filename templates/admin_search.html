@@ -3,15 +3,19 @@
 
 {% block content %}
 <section class="admin-section">
-    <div class="container">
-        <div class="card filter-card">
-            <form method="GET" action="{{ url_for('admin.admin_dashboard') }}" class="filter-form" id="filterForm">
-                <div class="filter-row">
-                    <div class="form-group">
-                        <label for="q">Search</label>
-                        <input type="text" id="q" name="q" value="{{ search }}"
-                               placeholder="Tracking #, location, keyword..." maxlength="100">
-                    </div>
+    <div class="container" style="max-width: 560px;">
+        <header class="admin-dash-header">
+            <h1 class="page-title">Search cases</h1>
+            <p class="page-subhead">Find a complaint by tracking number, location, or keyword.</p>
+        </header>
+        <div class="card auth-card" style="max-width: none;">
+            <form method="GET" action="{{ url_for('admin.admin_dashboard') }}" class="auth-form" id="filterForm">
+                <div class="form-group">
+                    <label for="q">Search</label>
+                    <input type="text" id="q" name="q" value="{{ search or '' }}"
+                           placeholder="Tracking #, location, keyword…" maxlength="100" autofocus>
+                </div>
+                <div class="form-row">
                     <div class="form-group">
                         <label for="status">Status</label>
                         <select id="status" name="status">
@@ -30,14 +34,13 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="form-group filter-actions">
-                        <label>&nbsp;</label>
-                        <button type="submit" class="btn btn-primary" id="filterBtn">
-                            <span class="btn-text"><i class="fa-solid fa-filter"></i> Filter</span>
-                            <span class="btn-loader hidden"><span class="mini-spinner white"></span></span>
-                        </button>
-                        <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline">Reset</a>
-                    </div>
+                </div>
+                <div class="wizard-actions">
+                    <button type="submit" class="btn btn-primary" id="filterBtn">
+                        <span class="btn-text"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Search</span>
+                        <span class="btn-loader hidden"><span class="mini-spinner white"></span></span>
+                    </button>
+                    <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-ghost">Reset</a>
                 </div>
             </form>
         </div>
