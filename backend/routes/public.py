@@ -469,7 +469,7 @@ def serve_upload(filename):
     safe = secure_filename(filename)
     if not safe or ".." in filename or filename.startswith("/"):
         abort(404)
-    return send_from_directory(UPLOAD_FOLDER, safe)
+    return send_from_directory(current_app.config["UPLOAD_FOLDER"], safe)
 
 
 # ─── Admin auth ────────────────────────────────────────────────────────────
