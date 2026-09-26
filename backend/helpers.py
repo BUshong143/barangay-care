@@ -790,6 +790,7 @@ def list_active_staff():
 
 def resolve_staff_assignment(staff_id_raw, name_fallback=""):
     """Resolve form assignment to (staff_id, display_name). Prefers staff ID."""
+    from backend.security import sanitize_text
     staff_id = None
     display = sanitize_text(name_fallback or "", 150) or None
     try:
