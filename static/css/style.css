@@ -2874,4 +2874,16 @@ body.public-shell .side-nav.desktop-only {
     }
 }
 
+/* Tracking number box — missed in earlier dark-mode pass */
+html.dark-mode .tracking-box {
+    background: var(--slate-800) !important;
+    border-color: var(--slate-600) !important;
+}
+html.dark-mode .tracking-label {
+    color: var(--slate-400) !important;
+}
+html.dark-mode .tracking-number {
+    color: var(--primary-light) !important;
+}
+
 /* Tooltip-style title already on links via title attr when collapsed */
