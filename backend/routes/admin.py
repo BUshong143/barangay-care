@@ -545,14 +545,15 @@ def admin_complaint(complaint_id):
                 )
                 log_complaint_history(complaint_id, old_status, "Verified", note="Verified by staff", cur=cur)
                 log_activity("complaint.verify", "complaint", complaint_id, cur=cur)
-                if before.get("resident_id"):
-                    notify_user(
-                        "resident", before["resident_id"],
-                        title="Complaint verified",
-                        body=f'{before.get("tracking_number")} was verified by barangay staff.',
-                        link=f'/track?tracking={before.get("tracking_number")}',
-                        complaint_id=complaint_id, cur=cur,
-                    )
+                notify_tracking(
+                    before.get("tracking_number"),
+                    "Complaint verified",
+                    body=f'{before.get("tracking_number")} was verified by barangay staff.',
+                    link=f'/track?tracking={before.get("tracking_number")}',
+                    complaint_id=complaint_id,
+                    resident_id=before.get("resident_id"),
+                    cur=cur,
+                )
             elif action == "assign":
                 staff_id_raw = request.form.get("assigned_staff_id", "")
                 assigned_staff_id, assigned = resolve_staff_assignment(staff_id_raw, assigned)
@@ -744,14 +745,15 @@ def admin_complaint(complaint_id):
                 )
                 log_activity("complaint.resolve", "complaint", complaint_id,
                              details="with_evidence=1" if (resolution_photo or after_photo) else None, cur=cur)
-                if before.get("resident_id"):
-                    notify_user(
-                        "resident", before["resident_id"],
-                        title="Complaint resolved — please confirm",
-                        body=f'{before.get("tracking_number")} was marked Resolved. Please confirm and rate.',
-                        link=f'/track?tracking={before.get("tracking_number")}',
-                        complaint_id=complaint_id, cur=cur,
-                    )
+                notify_tracking(
+                    before.get("tracking_number"),
+                    "Complaint resolved — please confirm",
+                    body=f'{before.get("tracking_number")} was marked Resolved. Please confirm and rate.',
+                    link=f'/track?tracking={before.get("tracking_number")}',
+                    complaint_id=complaint_id,
+                    resident_id=before.get("resident_id"),
+                    cur=cur,
+                )
             elif action == "update":
                 updates, params = [], []
                 new_status = None
@@ -803,6 +805,16 @@ def admin_complaint(complaint_id):
                         )
                     log_activity("complaint.update", "complaint", complaint_id,
                                  details=f"status={new_status or old_status}", cur=cur)
+                    if new_status and new_status != old_status:
+                        notify_tracking(
+                            before.get("tracking_number"),
+                            "Complaint status updated",
+                            body=f'{before.get("tracking_number")} is now {new_status}.',
+                            link=f'/track?tracking={before.get("tracking_number")}',
+                            complaint_id=complaint_id,
+                            resident_id=before.get("resident_id"),
+                            cur=cur,
+                        )
             elif action == "send_message":
                 body = sanitize_text(request.form.get("body", ""), 1000)
                 if body:
@@ -1092,5 +1104,4 @@ def admin_settings():
     return render_template("admin_settings.html", account=account)
 
 
-# ─── API ───────────────────────────────────────────────────────────────────
-
+# ─── API ──────────────────────────────────────────────────────────────────
