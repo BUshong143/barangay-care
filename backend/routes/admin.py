@@ -761,15 +761,14 @@ def admin_complaint(complaint_id):
                     updates.append("status = %s")
                     params.append(status)
                     new_status = status
+                due_at_value = None
                 if priority and priority in PRIORITIES:
                     updates.append("priority = %s")
                     params.append(priority)
                     # Recalculate due date from now when priority changes on open cases
                     if old_status not in ("Resolved", "Confirmed"):
                         due = compute_due_at(priority)
-                        due_naive = due.replace(tzinfo=None) if getattr(due, "tzinfo", None) else due
-                        updates.append("due_at = %s")
-                        params.append(due_naive)
+                        due_at_value = due.replace(tzinfo=None) if getattr(due, "tzinfo", None) else due
                 if "assigned_personnel" in request.form:
                     updates.append("assigned_personnel = %s")
                     params.append(assigned)
@@ -781,15 +780,18 @@ def admin_complaint(complaint_id):
                     srow = cur.fetchone()
                     updates.append("assigned_staff_id = %s")
                     params.append(srow["id"] if srow else None)
-                # Optional due_at override from form (YYYY-MM-DD)
+                # Optional due_at override from form (YYYY-MM-DD) — takes precedence
+                # over the priority-based recalculation above, and is only ever
+                # added to the query once.
                 due_raw = sanitize_text(request.form.get("due_at", ""), 20)
                 if due_raw:
                     try:
-                        due_dt = datetime.strptime(due_raw, "%Y-%m-%d")
-                        updates.append("due_at = %s")
-                        params.append(due_dt)
+                        due_at_value = datetime.strptime(due_raw, "%Y-%m-%d")
                     except ValueError:
                         pass
+                if due_at_value is not None:
+                    updates.append("due_at = %s")
+                    params.append(due_at_value)
                 if updates:
                     updates.append("updated_at = CURRENT_TIMESTAMP")
                     params.append(complaint_id)
