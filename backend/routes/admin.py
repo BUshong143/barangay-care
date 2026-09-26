@@ -631,6 +631,15 @@ def admin_complaint(complaint_id):
                 )
                 log_activity("complaint.reassign", "complaint", complaint_id,
                              details=f"to={assigned} staff_id={assigned_staff_id}", cur=cur)
+                notify_tracking(
+                    before.get("tracking_number"),
+                    "Complaint reassigned",
+                    body=f'{before.get("tracking_number")} was reassigned to {assigned}.',
+                    link=f'/track?tracking={before.get("tracking_number")}',
+                    complaint_id=complaint_id,
+                    resident_id=before.get("resident_id"),
+                    cur=cur,
+                )
                 if before.get("resident_id"):
                     notify_user(
                         "resident", before["resident_id"],
